@@ -48,4 +48,5 @@ Marketing website prototype for "TeamSamir" / TS Fitness, a personal-training bu
 
 ## Deployment
 
+- Live at https://teamsamir.vercel.app (Vercel project `teamsamir`), from the GitHub repo `ArshadAttar/teamsamir`. The repo is connected to Vercel, so every push to `main` deploys to production. This folder (`ts-website/team-samir`) is the current copy. The old `ts-website/ts-v1` folder, its repo `team-samir-website` and https://team-samir-website.vercel.app are no longer updated.
 - Hosted on Vercel. `vercel.json` sets the build command, `trailingSlash: true` (redirects `/services` to `/services/`), long immutable caching for `/assets/*`, 30-day caching for `/media/*`, and basic security headers. `VITE_FORM_ENDPOINT` must be set in Vercel's Environment Variables.
