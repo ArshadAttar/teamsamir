@@ -21,15 +21,15 @@ export interface PageMeta {
   index: boolean;
 }
 
-const DEFAULT_IMAGE = '/media/shared/og/og-default.jpg';
+/** TeamSamir logo and tagline on the brand's dark blue (shown when the Home link is shared) */
+const DEFAULT_IMAGE = '/media/shared/og/og-logo.jpg';
 
 export const PAGE_META: Record<PageId, PageMeta> = {
   home: {
-    title: 'TeamSamir | Personal Training & Fitness Coaching in Pune',
-    description:
-      '1-on-1 personal training, nutrition guidance and fitness coaching with Coach Samir in Kothrud, Pune, plus live online sessions. Book a free consultation.',
+    title: 'TeamSamir | Personal Training & Fitness Coaching',
+    description: 'Your fitness. Your goals. Our expertise.',
     image: DEFAULT_IMAGE,
-    imageAlt: 'Coach Samir guiding a 1-on-1 personal training session',
+    imageAlt: 'TeamSamir logo with the tagline: Your fitness. Your goals. Our expertise.',
     index: true,
   },
   services: {

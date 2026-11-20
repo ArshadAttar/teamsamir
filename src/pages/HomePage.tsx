@@ -88,7 +88,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Supporting Copy */}
               <p className="text-xs sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-Live 1-on-1 personal training worldwide and at your home or gym in Pune. Certified coaches, personalized workouts, Indian meal plans, and daily support.
+                Your fitness. Your goals. <span className="text-[#00A3FF] font-semibold">Our expertise.</span>
               </p>
 
               {/* Credibility Line (Client-supplied claims with verification notice) */}
