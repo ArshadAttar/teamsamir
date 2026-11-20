@@ -102,23 +102,23 @@ Live 1-on-1 personal training worldwide and at your home or gym in Pune. Certifi
                 <div className="flex items-start sm:items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm font-medium text-slate-200">
                     <span className="text-white font-semibold">{BUSINESS_INFO.experienceYears}+ Years Experience</span>
-                    <span className="text-slate-500">|</span>
+                    <span className="text-slate-500 max-[379px]:hidden" aria-hidden="true">|</span>
                     <span className="text-white font-semibold">{BUSINESS_INFO.clientsTrained} Clients</span>
-                    <span className="text-slate-500">|</span>
+                    <span className="text-slate-500 max-[379px]:hidden" aria-hidden="true">|</span>
                     <span className="text-white font-semibold">{BUSINESS_INFO.celebritiesTrained} Celebrities</span>
                   </div>
                   <Award className="w-4 h-4 text-[#00A3FF] shrink-0 mt-0.5 sm:mt-0" />
                 </div>
-                <p className="text-[length:max(10px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-slate-400 mt-1">
+                <p className="text-[length:max(11px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-slate-400 mt-1">
                   {BUSINESS_INFO.experienceYears}+ years of hands-on coaching in Pune, guiding {BUSINESS_INFO.clientsTrained} clients and {BUSINESS_INFO.celebritiesTrained} celebrities with K11-certified methods.
                 </p>
               </div>
 
-              {/* 2 Primary CTAs (2-column side-by-side on mobile); WhatsApp is the floating icon */}
-              <div className="pt-1 grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+              {/* 2 Primary CTAs (stacked below 380px, side by side up to 640px); WhatsApp is the floating icon */}
+              <div className="pt-1 grid grid-cols-1 min-[380px]:grid-cols-2 sm:flex sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => onBookDemo({ kind: 'trial' })}
-                  className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3.5 min-h-[40px] sm:min-h-[46px] text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#00A3FF] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-md transition-all cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3.5 min-h-[44px] sm:min-h-[46px] text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#00A3FF] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                   <span className="truncate">Book Trial – INR 1,999</span>
@@ -126,7 +126,7 @@ Live 1-on-1 personal training worldwide and at your home or gym in Pune. Certifi
 
                 <button
                   onClick={() => onNavigate('services')}
-                  className="inline-flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 py-2 sm:px-5 sm:py-3 min-h-[40px] sm:min-h-[46px] text-xs sm:text-sm font-semibold text-white bg-[#1C2028] hover:bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl transition-all cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap px-3 py-2 sm:px-5 sm:py-3 min-h-[44px] sm:min-h-[46px] text-xs sm:text-sm font-semibold text-white bg-[#1C2028] hover:bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl transition-all cursor-pointer"
                 >
                   <span>Explore Training</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#00A3FF]" />

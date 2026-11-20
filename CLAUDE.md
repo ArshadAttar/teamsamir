@@ -31,6 +31,8 @@ Marketing website prototype for "TeamSamir" / TS Fitness, a personal-training bu
 - Fonts are Plus Jakarta Sans (body) and Outfit (`font-display`, used for headings), loaded from Google Fonts in `index.html`.
 - Animation uses `motion` (Framer Motion); icons use `lucide-react`.
 - Layout is mobile-first. `MobileBottomBar` is fixed on small screens, which is why the root element has `pb-16 lg:pb-0`.
+- Phones use a 13.5–14.5px root font (see `index.css`). `--text-xs`/`--text-sm` in `@theme` have px floors (11.5px / 13px) so small text stays readable there; desktop sizes are unaffected. Contact form fields are 16px on phones so iOS doesn't zoom on focus.
+- Below 640px (`useIsPhone()` in `src/lib/useMediaQuery.ts`), the review cards, the video strips (`FeedbackVideoStrip`) and the Transformations before & after gallery render as `SnapCarousel` (one centered item, swipe/snap, arrows, dots or counter); 640px and up keep the `Marquee`/`ce-track` strips. Prerendered HTML uses the desktop version; the client swaps it on load. Review cards expand in place ("Read more" / "Show less"), and the strip or carousel pauses while one is expanded.
 
 ## Assets
 

@@ -4,12 +4,14 @@ import { ChevronLeft, ChevronRight, ImagePlus, X } from 'lucide-react';
 import { PageId, TransformationItem, ClientTransformation } from '../types';
 import { CLIENT_TRANSFORMATIONS, TRANSFORMATION_VIDEOS } from '../data/mockData';
 import { FeedbackVideoStrip } from '../components/ClientFeedback';
+import { SnapCarousel } from '../components/SnapCarousel';
+import { useIsPhone } from '../lib/useMediaQuery';
 
 /**
  * Transformations page. Exactly three sections:
  * 1. A short health & fitness paragraph
- * 2. "Real Transformations": horizontal gallery of before & after photos (one photo per card,
- *    4 per screen on laptops) with a full-screen viewer
+ * 2. "Real Transformations": horizontal gallery of before & after photos (one photo per card;
+ *    one at a time on phones, 3 per screen on tablets, 4 on laptops) with a full-screen viewer
  * 3. "Transformation Stories": the auto-scrolling client video strip used on the Home page
  *
  * Content comes from CLIENT_TRANSFORMATIONS and TRANSFORMATION_VIDEOS in src/data/mockData.ts.
@@ -39,7 +41,7 @@ const DESCRIPTION = [
 /* ------------------------------------------------------------------ */
 
 /** Mouse drag-to-scroll for a horizontal track. Touch keeps native swipe + snap. */
-function useDragScroll(ref: React.RefObject<HTMLDivElement | null>) {
+function useDragScroll(ref: React.RefObject<HTMLDivElement | null>, active = true) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -93,11 +95,11 @@ function useDragScroll(ref: React.RefObject<HTMLDivElement | null>) {
       el.removeEventListener('lostpointercapture', onUp);
       el.removeEventListener('click', onClick, true);
     };
-  }, [ref]);
+  }, [ref, active]);
 }
 
 /** Tracks whether a track can scroll further left / right (for the arrow buttons). */
-function useScrollEdges(ref: React.RefObject<HTMLDivElement | null>) {
+function useScrollEdges(ref: React.RefObject<HTMLDivElement | null>, active = true) {
   const [edges, setEdges] = useState({ start: true, end: false });
   useEffect(() => {
     const el = ref.current;
@@ -114,7 +116,7 @@ function useScrollEdges(ref: React.RefObject<HTMLDivElement | null>) {
       el.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
     };
-  }, [ref]);
+  }, [ref, active]);
   return edges;
 }
 
@@ -124,7 +126,7 @@ function useScrollEdges(ref: React.RefObject<HTMLDivElement | null>) {
  * It stops while the visitor hovers, drags, swipes or scrolls it, and continues a few seconds
  * after they leave it. Off for visitors who prefer reduced motion.
  */
-function useAutoScroll(ref: React.RefObject<HTMLDivElement | null>, delayMs = 5000, speed = 32) {
+function useAutoScroll(ref: React.RefObject<HTMLDivElement | null>, active = true, delayMs = 5000, speed = 32) {
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
@@ -230,7 +232,7 @@ function useAutoScroll(ref: React.RefObject<HTMLDivElement | null>, delayMs = 50
       el.removeEventListener('touchstart', touched);
       el.removeEventListener('wheel', touched);
     };
-  }, [ref, delayMs, speed]);
+  }, [ref, active, delayMs, speed]);
 }
 
 function useBodyScrollLock(active: boolean) {
@@ -360,8 +362,33 @@ const BeforeAfterPhoto: React.FC<{
   );
 };
 
-/** 2 cards per screen on phones, 3 on tablets, 4 on laptops (gap: 1rem, 1.25rem from sm) */
-const CARD_WIDTH = 'w-[calc((100%-1rem)/2)] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)]';
+/** 3 cards per screen on tablets, 4 on laptops (gap: 1.25rem). Phones use the one-photo carousel. */
+const CARD_WIDTH = 'sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)]';
+
+const CardButton: React.FC<{ item: ClientTransformation; onOpen: () => void; single?: boolean }> = ({
+  item,
+  onOpen,
+  single = false,
+}) => (
+  <button
+    type="button"
+    onClick={onOpen}
+    aria-label={`View larger: ${item.title}`}
+    className="group block w-full text-left rounded-[24px] p-2 sm:p-2.5 bg-white/[0.06] backdrop-blur-xl border border-white/10 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.015] hover:border-[#1769FF]/45 hover:shadow-[0_32px_70px_-24px_rgba(23,105,255,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF] cursor-pointer"
+  >
+    {/* Phones: capped height so the card and its title fit on screen; the photo is shown whole (object-contain) */}
+    <BeforeAfterPhoto
+      src={item.thumbSrc}
+      alt={`${item.title}: before and after`}
+      zoomOnHover
+      className={single ? 'w-full aspect-[3/4] max-h-[58svh]' : 'aspect-[3/4]'}
+    />
+
+    <h3 className="px-1.5 pt-3 pb-1 sm:px-2 font-display font-bold text-[length:max(15px,calc(15rem/16))] sm:text-base text-white leading-snug line-clamp-2 min-h-[2.75em]">
+      {item.title}
+    </h3>
+  </button>
+);
 
 const TransformationCard: React.FC<{
   item: ClientTransformation;
@@ -375,18 +402,7 @@ const TransformationCard: React.FC<{
     transition={{ duration: 0.8, delay: Math.min(index, 3) * 0.09, ease: EASE }}
     className={CARD_WIDTH}
   >
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={`View larger: ${item.title}`}
-      className="group block w-full text-left rounded-[24px] p-2 sm:p-2.5 bg-white/[0.06] backdrop-blur-xl border border-white/10 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.015] hover:border-[#1769FF]/45 hover:shadow-[0_32px_70px_-24px_rgba(23,105,255,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF] cursor-pointer"
-    >
-      <BeforeAfterPhoto src={item.thumbSrc} alt={`${item.title}: before and after`} zoomOnHover className="aspect-[3/4]" />
-
-      <h3 className="px-1.5 pt-3 pb-1 sm:px-2 font-display font-bold text-sm sm:text-base text-white leading-snug line-clamp-2 min-h-[2.75em]">
-        {item.title}
-      </h3>
-    </button>
+    <CardButton item={item} onOpen={onOpen} />
   </motion.div>
 );
 
@@ -466,10 +482,12 @@ const TransformationLightbox: React.FC<{
 /* ------------------------------------------------------------------ */
 
 export const TransformationsPage: React.FC<TransformationsPageProps> = () => {
+  const isPhone = useIsPhone();
   const photoTrack = useRef<HTMLDivElement>(null);
-  useDragScroll(photoTrack);
-  useAutoScroll(photoTrack);
-  const photoEdges = useScrollEdges(photoTrack);
+  // The strip (and these hooks) are for tablets and laptops; phones get the one-photo carousel
+  useDragScroll(photoTrack, !isPhone);
+  useAutoScroll(photoTrack, !isPhone);
+  const photoEdges = useScrollEdges(photoTrack, !isPhone);
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
@@ -531,12 +549,28 @@ export const TransformationsPage: React.FC<TransformationsPageProps> = () => {
             />
           </div>
 
-          {/* Full screen width; starts moving by itself after 5 s on screen */}
-          <div ref={photoTrack} className="ce-track ce-track--full gap-4 sm:gap-5 py-4">
-            {CLIENT_TRANSFORMATIONS.map((item, i) => (
-              <TransformationCard key={item.id} item={item} index={i} onOpen={() => setLightboxIndex(i)} />
-            ))}
-          </div>
+          {isPhone ? (
+            // Phones: one photo at a time, centered; swipe or use the buttons, moves on by itself every 5 s
+            <SnapCarousel
+              label="Client before and after photos"
+              items={CLIENT_TRANSFORMATIONS}
+              getKey={(item) => item.id}
+              autoAdvanceMs={5000}
+              paused={lightboxIndex !== null}
+              renderItem={(item, i) => (
+                <div className="mx-auto max-w-[26rem] py-2">
+                  <CardButton item={item} single onOpen={() => setLightboxIndex(i)} />
+                </div>
+              )}
+            />
+          ) : (
+            // Full screen width; starts moving by itself after 5 s on screen
+            <div ref={photoTrack} className="ce-track ce-track--full gap-5 py-4">
+              {CLIENT_TRANSFORMATIONS.map((item, i) => (
+                <TransformationCard key={item.id} item={item} index={i} onOpen={() => setLightboxIndex(i)} />
+              ))}
+            </div>
+          )}
 
         </div>
       </section>

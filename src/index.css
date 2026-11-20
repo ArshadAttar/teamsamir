@@ -4,6 +4,11 @@
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
+  /* Readable floor for the two smallest text sizes. Phones use a 13.5–14.5px root (below),
+     which would make text-xs ~10px and text-sm ~12px; from 16px roots up these are unchanged. */
+  --text-xs: max(11.5px, 0.75rem);
+  --text-sm: max(13px, 0.875rem);
+
   --color-brand-black: #111318;
   --color-brand-surface: #1C2028;
   --color-brand-blue: #1769FF;

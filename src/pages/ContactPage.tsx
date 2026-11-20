@@ -90,8 +90,9 @@ const formHeading = (intent: BookingIntent): { title: string; sub: string } => {
   return { title: 'Book Your Free Demo Session', sub: 'Share your details and we will call you to plan your free demo.' };
 };
 
+// Phones: 16px text (iOS zooms the page into any field smaller than that) and a 46px tap height
 const inputClass = (hasError: boolean) =>
-  `w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
+  `w-full px-3.5 py-2.5 text-sm max-sm:text-[16px] max-sm:min-h-[46px] rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
     hasError ? 'border-[#C62828] focus:ring-[#C62828]/20 bg-red-50/20' : 'border-[#E1E6EF] focus:ring-[#1769FF]/20 focus:border-[#1769FF]'
   }`;
 
@@ -150,8 +151,8 @@ const AutoResetBar: React.FC<{ duration: number; paused: boolean; onDone: () => 
 
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) =>
   message ? (
-    <p id={id} className="text-xs text-[#C62828] mt-1 flex items-center gap-1">
-      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+    <p id={id} className="text-xs max-sm:text-[13px] text-[#C62828] mt-1 flex items-start gap-1">
+      <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
       <span>{message}</span>
     </p>
   ) : null;
@@ -340,7 +341,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* 1. Name (required) */}
                       <div>
-                        <label htmlFor="fullName" className="block text-xs font-semibold text-[#171A21] mb-1.5">
+                        <label htmlFor="fullName" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                           Full Name <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -360,7 +361,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                       {/* 2. Email (optional) */}
                       <div>
-                        <label htmlFor="email" className="block text-xs font-semibold text-[#171A21] mb-1.5">
+                        <label htmlFor="email" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                           Email <span className="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <input
@@ -381,11 +382,11 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                       {/* 3. Mobile number (required, 10 digits) */}
                       <div>
-                        <label htmlFor="mobileNumber" className="block text-xs font-semibold text-[#171A21] mb-1.5">
+                        <label htmlFor="mobileNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                           Mobile Number <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">+91</span>
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
                           <input
                             id="mobileNumber"
                             type="tel"
@@ -397,7 +398,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                             placeholder="98765 43210"
                             aria-invalid={!!errors.mobileNumber}
                             aria-describedby={errors.mobileNumber ? 'mobileNumber-error' : undefined}
-                            className={`${inputClass(!!errors.mobileNumber)} pl-12`}
+                            className={`${inputClass(!!errors.mobileNumber)} pl-12 max-sm:pl-[52px]`}
                           />
                         </div>
                         <FieldError id="mobileNumber-error" message={errors.mobileNumber} />
@@ -406,10 +407,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                       {/* 4. WhatsApp number (required, 10 digits; can copy mobile) */}
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <label htmlFor="whatsappNumber" className="block text-xs font-semibold text-[#171A21]">
+                          <label htmlFor="whatsappNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
                             WhatsApp Number <span className="text-red-500">*</span>
                           </label>
-                          <label className="inline-flex items-center gap-1.5 text-[length:max(11px,calc(11rem/16))] text-[#646B78] cursor-pointer">
+                          <label className="inline-flex items-center gap-1.5 min-h-8 text-[length:max(12px,calc(12rem/16))] text-[#646B78] cursor-pointer">
                             <input
                               type="checkbox"
                               checked={sameAsMobile}
@@ -417,13 +418,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                                 setSameAsMobile(e.target.checked);
                                 update({}, e.target.checked);
                               }}
-                              className="w-3.5 h-3.5 rounded text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
+                              className="w-4 h-4 rounded text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
                             />
                             Same as mobile
                           </label>
                         </div>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">+91</span>
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
                           <input
                             id="whatsappNumber"
                             type="tel"
@@ -435,7 +436,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                             placeholder="98765 43210"
                             aria-invalid={!!errors.whatsappNumber}
                             aria-describedby={errors.whatsappNumber ? 'whatsappNumber-error' : undefined}
-                            className={`${inputClass(!!errors.whatsappNumber)} pl-12`}
+                            className={`${inputClass(!!errors.whatsappNumber)} pl-12 max-sm:pl-[52px]`}
                           />
                         </div>
                         <FieldError id="whatsappNumber-error" message={errors.whatsappNumber} />
@@ -443,7 +444,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                       {/* 5. Goal (optional) */}
                       <div>
-                        <label htmlFor="goal" className="block text-xs font-semibold text-[#171A21] mb-1.5">
+                        <label htmlFor="goal" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                           Your Goal <span className="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <select
@@ -461,7 +462,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                       {/* 6. Plan (optional; preselected from the button clicked) */}
                       <div>
-                        <label htmlFor="plan" className="block text-xs font-semibold text-[#171A21] mb-1.5">
+                        <label htmlFor="plan" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                           Plan <span className="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <select
@@ -486,7 +487,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                       {/* Preferred contact method: Phone Call (default), WhatsApp, Email */}
                       <div className="sm:col-span-2">
-                        <span className="block text-xs font-semibold text-[#171A21] mb-1.5">Preferred Contact Method</span>
+                        <span className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">Preferred Contact Method</span>
                         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Preferred contact method">
                           {CONTACT_METHODS.map((method) => (
                             <button
@@ -495,7 +496,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                               role="radio"
                               aria-checked={formData.contactMethod === method}
                               onClick={() => update({ contactMethod: method })}
-                              className={`min-h-11 py-2 px-2 sm:px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                              className={`min-h-11 max-sm:min-h-[46px] py-2 px-2 sm:px-3 text-xs max-sm:text-[13px] font-semibold rounded-xl border transition-all cursor-pointer ${
                                 formData.contactMethod === method
                                   ? 'bg-[#EEF5FF] text-[#1769FF] border-[#1769FF]'
                                   : 'bg-white text-slate-700 border-[#E1E6EF] hover:bg-slate-50'
@@ -537,7 +538,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-3 sm:py-3.5 px-4 sm:px-5 min-h-[44px] text-xs sm:text-sm font-bold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.99] rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75"
+                        className="w-full py-3 sm:py-3.5 px-4 sm:px-5 min-h-[44px] max-sm:min-h-[48px] text-xs max-sm:text-[15px] sm:text-sm font-bold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.99] rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75"
                       >
                         {isSubmitting ? (
                           <span>Sending...</span>

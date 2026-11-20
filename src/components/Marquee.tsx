@@ -26,6 +26,8 @@ interface MarqueeProps {
    * hovered, every card is shown at normal size. Slots need enough padding for the zoom.
    */
   zoomOnHover?: boolean;
+  /** Hold still (e.g. while a card in the strip is expanded and being read) */
+  paused?: boolean;
   className?: string;
 }
 
@@ -48,9 +50,12 @@ export const Marquee: React.FC<MarqueeProps> = ({
   slotClassName = DEFAULT_SLOT,
   minItemsPerLoop = 1,
   zoomOnHover = false,
+  paused: pausedProp = false,
   className = '',
 }) => {
   const [hoveredSlot, setHoveredSlot] = useState(-1);
+  const pausedPropRef = useRef(pausedProp);
+  pausedPropRef.current = pausedProp;
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +116,7 @@ export const Marquee: React.FC<MarqueeProps> = ({
         touched();
         pos = el.scrollLeft;
       }
-      const paused = reduced || hovering || focused || down || now - lastTouch < RESUME_AFTER_MS;
+      const paused = reduced || pausedPropRef.current || hovering || focused || down || now - lastTouch < RESUME_AFTER_MS;
       if (!paused) {
         const slot = track.firstElementChild as HTMLElement | null;
         const speed = (slot ? slot.offsetWidth : el.clientWidth / 3) / secondsPerItem; // px per second

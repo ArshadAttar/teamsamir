@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { LazyVideo } from './LazyVideo';
-import { Star, Quote, CheckCircle2, Video, X, MapPin, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Star, Quote, CheckCircle2, Video, MapPin, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { REVIEWS, VIDEO_FEEDBACK } from '../data/mockData';
 import { ReviewItem, VideoFeedbackItem } from '../types';
 import { Marquee } from './Marquee';
+import { SnapCarousel } from './SnapCarousel';
+import { useIsPhone } from '../lib/useMediaQuery';
 
 /* Shared frosted-glass card surface */
 const GLASS =
@@ -66,135 +67,115 @@ const ResultBadge: React.FC<{ text: string }> = ({ text }) => (
   </span>
 );
 
-/** Popup with the full review text */
-const ReviewModal: React.FC<{ review: ReviewItem; onClose: () => void }> = ({ review, onClose }) => {
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      opener?.focus?.();
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={(e) => {
-        // Stop the click reaching the card behind (React events bubble through portals), which would reopen it
-        e.stopPropagation();
-        onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Review by ${review.name}`}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg max-h-[85vh] flex flex-col rounded-2xl bg-[#0F1A30] border border-white/15 shadow-2xl"
-      >
-        <div className="flex items-start justify-between gap-3 p-5 sm:p-6 pb-4 border-b border-white/10">
-          <div className="space-y-2 min-w-0">
-            <ReviewAuthor review={review} />
-            <Stars count={review.stars} />
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF]"
-            aria-label="Close review"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="overflow-y-auto p-5 sm:p-6 space-y-4">
-          <ReviewText text={review.comment} className="text-sm sm:text-[15px] text-slate-100 leading-relaxed" />
-          <ResultBadge text={review.resultBadge} />
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-};
-
 /**
- * Fixed-height review card (same size on phones and laptops). Long messages are cut off with
- * a fade; "Read more" (or clicking the card) opens the full message.
+ * Review card. Long messages show a faded preview and a "Read more" button that expands
+ * this card in place to the full message ("Show less" collapses it again). Each card
+ * expands on its own.
+ * - `strip` (tablets and laptops): fixed-height card in the scrolling strip; the preview
+ *   fills the card.
+ * - `single` (phones, one card per screen): the card is as tall as its content; the
+ *   preview is about 8 lines.
  */
-const ReviewCard: React.FC<{ review: ReviewItem; isCopy: boolean }> = ({ review, isCopy }) => {
-  const [open, setOpen] = useState(false);
+const ReviewCard: React.FC<{
+  review: ReviewItem;
+  isCopy?: boolean;
+  layout?: 'strip' | 'single';
+  onExpandedChange?: (expanded: boolean) => void;
+}> = ({ review, isCopy = false, layout = 'strip', onExpandedChange }) => {
+  const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
   const textBoxRef = useRef<HTMLDivElement>(null);
+  const textId = useId();
   // Assume long until measured (prerendered HTML shows the button)
   const [overflows, setOverflows] = useState(true);
-  const close = useCallback(() => setOpen(false), []);
+  const expandedRef = useRef(false);
+  expandedRef.current = expanded;
 
   useEffect(() => {
     const el = textBoxRef.current;
     if (!el) return;
-    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    // Only measure the collapsed preview (expanded, the text always fits)
+    const measure = () => {
+      if (!expandedRef.current) setOverflows(el.scrollHeight > el.clientHeight + 1);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
+  const onExpandedChangeRef = useRef(onExpandedChange);
+  onExpandedChangeRef.current = onExpandedChange;
+  // A card removed while expanded (e.g. on resize) must not keep its strip paused
+  useEffect(() => () => {
+    if (expandedRef.current) onExpandedChangeRef.current?.(false);
+  }, []);
+
+  const toggle = () => {
+    const next = !expanded;
+    setExpanded(next);
+    onExpandedChange?.(next);
+    if (!next) {
+      // Collapsing a long review: bring the card's top back on screen if it scrolled away
+      requestAnimationFrame(() => {
+        const top = cardRef.current?.getBoundingClientRect().top;
+        if (top !== undefined && top < 72) window.scrollBy({ top: top - 88, behavior: 'smooth' });
+      });
+    }
+  };
+
+  const single = layout === 'single';
+  const cardSize = expanded
+    ? single
+      ? ''
+      : 'min-h-[440px] sm:min-h-[462px]'
+    : single
+      ? ''
+      : 'h-[440px] sm:h-[462px]';
+  const previewSize = expanded ? '' : single ? 'max-h-[13em]' : 'h-full';
+
   return (
-    <>
-      <article
-        className={`${GLASS} h-[440px] sm:h-[462px] p-5 sm:p-6 flex flex-col gap-4 ${overflows ? 'cursor-pointer' : ''}`}
-        onClick={overflows ? () => setOpen(true) : undefined}
-      >
-        <div className="flex items-center justify-between shrink-0">
-          <Stars count={review.stars} />
-          <Quote className="w-6 h-6 text-[#00A3FF]/50" />
+    <article ref={cardRef} className={`${GLASS} ${cardSize} p-5 sm:p-6 flex flex-col gap-4`}>
+      <div className="flex items-center justify-between shrink-0">
+        <Stars count={review.stars} />
+        <Quote className="w-6 h-6 text-[#00A3FF]/50" />
+      </div>
+
+      {/* Message: collapsed, the end of a long message is faded out */}
+      <div className={`relative min-h-0 ${!single && !expanded ? 'flex-1' : ''}`}>
+        <div
+          ref={textBoxRef}
+          id={textId}
+          className={`text-sm leading-relaxed ${previewSize} ${
+            expanded ? '' : `overflow-hidden ${overflows ? '[mask-image:linear-gradient(to_bottom,black_65%,transparent)]' : ''}`
+          }`}
+        >
+          <ReviewText text={review.comment} className="text-slate-100" />
         </div>
+      </div>
 
-        {/* Message: fills the space left in the card; the rest is faded out */}
-        <div className="relative flex-1 min-h-0">
-          <div
-            ref={textBoxRef}
-            className={`h-full overflow-hidden ${
-              overflows ? '[mask-image:linear-gradient(to_bottom,black_70%,transparent)]' : ''
-            }`}
-          >
-            <ReviewText text={review.comment} className="text-sm text-slate-100 leading-relaxed" />
-          </div>
-        </div>
+      {overflows && (
+        <button
+          type="button"
+          tabIndex={isCopy ? -1 : undefined}
+          onClick={toggle}
+          aria-expanded={expanded}
+          aria-controls={textId}
+          className="self-start -mt-2 shrink-0 inline-flex items-center min-h-8 px-1 -mx-1 text-[length:max(13px,calc(13rem/16))] font-semibold text-[#00A3FF] hover:text-white underline underline-offset-4 decoration-[#00A3FF]/40 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF] rounded"
+        >
+          {expanded ? 'Show less' : 'Read more'}
+          <span className="sr-only"> of the review by {review.name}</span>
+        </button>
+      )}
 
-        {overflows && (
-          <button
-            type="button"
-            tabIndex={isCopy ? -1 : undefined}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(true);
-            }}
-            className="self-start -mt-2 shrink-0 text-xs font-semibold text-[#00A3FF] hover:text-white underline-offset-4 hover:underline cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF] rounded"
-            aria-label={`Read full review by ${review.name}`}
-          >
-            Read more
-          </button>
-        )}
+      <div className="shrink-0">
+        <ResultBadge text={review.resultBadge} />
+      </div>
 
-        <div className="shrink-0">
-          <ResultBadge text={review.resultBadge} />
-        </div>
-
-        <div className="shrink-0 pt-4 border-t border-white/10">
-          <ReviewAuthor review={review} />
-        </div>
-      </article>
-
-      {open && <ReviewModal review={review} onClose={close} />}
-    </>
+      <div className={`shrink-0 pt-4 border-t border-white/10 ${!single ? 'mt-auto' : ''}`}>
+        <ReviewAuthor review={review} />
+      </div>
+    </article>
   );
 };
 
@@ -202,7 +183,7 @@ const ReviewCard: React.FC<{ review: ReviewItem; isCopy: boolean }> = ({ review,
 const UNMUTE_EVENT = 'feedback-video-unmute';
 
 const CONTROL_BUTTON =
-  'w-9 h-9 rounded-full flex items-center justify-center bg-black/55 backdrop-blur-md text-white border border-white/25 hover:bg-[#1769FF] hover:border-[#1769FF] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
+  'w-9 h-9 [@media(hover:none)]:w-11 [@media(hover:none)]:h-11 rounded-full flex items-center justify-center bg-black/55 backdrop-blur-md text-white border border-white/25 hover:bg-[#1769FF] hover:border-[#1769FF] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
 
 /**
  * Video card with no text. Starts muted, loops, and plays automatically while on screen
@@ -295,16 +276,75 @@ const VideoCard: React.FC<{ video: VideoFeedbackItem; isCopy: boolean }> = ({ vi
  * Auto-scrolling strip of video-only cards (Home "Video Feedback" and the Transformations page).
  * Full width; the hovered card zooms, and the slot padding leaves room for that zoom.
  */
-export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: string }> = ({ videos, label }) => (
-  <Marquee
-    label={label}
-    secondsPerItem={5}
-    zoomOnHover
-    minItemsPerLoop={5}
-    slotClassName="w-[60cqw] px-[6cqw] sm:w-[calc(100cqw/3)] sm:px-[3cqw] lg:w-[20cqw] lg:px-[1.8cqw] py-10 sm:py-12"
-    items={videos.map((v) => ({ key: v.id, node: (isCopy: boolean) => <VideoCard video={v} isCopy={isCopy} /> }))}
-  />
-);
+export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: string }> = ({ videos, label }) => {
+  const isPhone = useIsPhone();
+
+  // Phones: one video at a time, centered. Its width is capped so the whole 9:16 card
+  // (and the buttons under it) fits on the screen without cropping the video.
+  if (isPhone) {
+    return (
+      <SnapCarousel
+        label={label}
+        className="pt-8 pb-6"
+        items={videos}
+        getKey={(v) => v.id}
+        renderItem={(v) => (
+          <div className="mx-auto w-[min(100%,calc(64svh*9/16))]">
+            <VideoCard video={v} isCopy={false} />
+          </div>
+        )}
+      />
+    );
+  }
+
+  return (
+    <Marquee
+      label={label}
+      secondsPerItem={5}
+      zoomOnHover
+      minItemsPerLoop={5}
+      slotClassName="w-[calc(100cqw/3)] px-[3cqw] lg:w-[20cqw] lg:px-[1.8cqw] py-12"
+      items={videos.map((v) => ({ key: v.id, node: (isCopy: boolean) => <VideoCard video={v} isCopy={isCopy} /> }))}
+    />
+  );
+};
+
+/** Written reviews: one card at a time on phones, a scrolling strip on larger screens */
+const ReviewsStrip: React.FC = () => {
+  const isPhone = useIsPhone();
+  // Number of expanded cards: the strip / carousel holds still while someone is reading one
+  const [expandedCount, setExpandedCount] = useState(0);
+  const onExpandedChange = useCallback((expanded: boolean) => {
+    setExpandedCount((n) => Math.max(0, n + (expanded ? 1 : -1)));
+  }, []);
+
+  if (isPhone) {
+    return (
+      <SnapCarousel
+        label="Client reviews"
+        items={REVIEWS}
+        getKey={(r) => r.id}
+        adaptiveHeight
+        autoAdvanceMs={7000}
+        paused={expandedCount > 0}
+        renderItem={(r) => <ReviewCard review={r} layout="single" onExpandedChange={onExpandedChange} />}
+      />
+    );
+  }
+
+  return (
+    <Marquee
+      label="Client reviews"
+      secondsPerItem={7}
+      paused={expandedCount > 0}
+      slotClassName="w-[50cqw] lg:w-[calc(100cqw/3)] pr-6 py-2"
+      items={REVIEWS.map((r) => ({
+        key: r.id,
+        node: (isCopy: boolean) => <ReviewCard review={r} isCopy={isCopy} onExpandedChange={onExpandedChange} />,
+      }))}
+    />
+  );
+};
 
 /** Section background: dark gradient with soft colour blobs so the glass cards read well */
 const GlassBackdrop: React.FC = () => (
@@ -347,11 +387,7 @@ export const ClientFeedback: React.FC = () => (
         />
         {/* Full-width strip (edge to edge) */}
         <div className="w-full">
-          <Marquee
-            label="Client reviews"
-            secondsPerItem={7}
-            items={REVIEWS.map((r) => ({ key: r.id, node: (isCopy: boolean) => <ReviewCard review={r} isCopy={isCopy} /> }))}
-          />
+          <ReviewsStrip />
         </div>
       </div>
     </section>
@@ -369,7 +405,7 @@ export const ClientFeedback: React.FC = () => (
         {/* Full-width strip (edge to edge). Pulled up a little to close the gap under the heading */}
         <div className="w-full -mt-4 sm:-mt-6">
           {/*
-            5 cards per screen on desktop (3 on tablet, ~1.7 on phones). The hovered card zooms
+            5 cards per screen on desktop, 3 on tablet, 1 at a time on phones. The hovered card zooms
             to 120%, so it grows 10% of its width on each side: the side padding (px) is set a
             little larger than that so the zoomed card never touches its neighbours, and the
             vertical padding (py) leaves room for it to grow 10% up and down.
