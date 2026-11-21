@@ -42,6 +42,20 @@ const ReviewText: React.FC<{ text: string; className?: string }> = ({ text, clas
   </div>
 );
 
+/** Phone review preview length (characters) */
+const PREVIEW_CHARS = 300;
+
+/** Cuts a long review at a word boundary and adds "…" (keeps **bold** markers paired) */
+const shortenReview = (text: string): string => {
+  if (text.length <= PREVIEW_CHARS + 40) return text;
+  let cut = text.slice(0, PREVIEW_CHARS);
+  const space = cut.lastIndexOf(' ');
+  if (space > PREVIEW_CHARS * 0.6) cut = cut.slice(0, space);
+  cut = cut.replace(/[\s.,;:!-]+$/, '');
+  if ((cut.match(/\*\*/g) ?? []).length % 2 === 1) cut += '**';
+  return `${cut}…`;
+};
+
 const Stars: React.FC<{ count: number }> = ({ count }) => (
   <div className="flex gap-0.5" aria-label={`${count} out of 5 stars`}>
     {Array.from({ length: count }).map((_, i) => (
@@ -113,9 +127,15 @@ const ReviewCard: React.FC<{
   const expandedRef = useRef(false);
   expandedRef.current = expanded;
 
+  const single = layout === 'single';
+  // Phones: the collapsed preview is a shortened copy of the text (ending in "…"), not a
+  // faded-out box. A CSS mask inside the swipe carousel made Android Chrome draw garbage.
+  const shortText = single ? shortenReview(review.comment) : review.comment;
+  const singleIsLong = single && shortText !== review.comment;
+
   useEffect(() => {
     const el = textBoxRef.current;
-    if (!el) return;
+    if (!el || single) return;
     // Only measure the collapsed preview (expanded, the text always fits)
     const measure = () => {
       if (!expandedRef.current) setOverflows(el.scrollHeight > el.clientHeight + 1);
@@ -124,7 +144,9 @@ const ReviewCard: React.FC<{
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [single]);
+
+  const showToggle = single ? singleIsLong : overflows;
 
   const onExpandedChangeRef = useRef(onExpandedChange);
   onExpandedChangeRef.current = onExpandedChange;
@@ -146,7 +168,6 @@ const ReviewCard: React.FC<{
     }
   };
 
-  const single = layout === 'single';
   const cardSize = expanded
     ? single
       ? ''
@@ -154,7 +175,7 @@ const ReviewCard: React.FC<{
     : single
       ? ''
       : 'h-[440px] sm:h-[462px]';
-  const previewSize = expanded ? '' : single ? 'max-h-[13em]' : 'h-full';
+  const previewSize = expanded || single ? '' : 'h-full';
 
   return (
     <article ref={cardRef} className={`${single ? PHONE_CARD : GLASS} ${cardSize} p-5 sm:p-6 flex flex-col gap-4`}>
@@ -169,14 +190,14 @@ const ReviewCard: React.FC<{
           ref={textBoxRef}
           id={textId}
           className={`text-sm leading-relaxed ${previewSize} ${
-            expanded ? '' : `overflow-hidden ${overflows ? '[mask-image:linear-gradient(to_bottom,black_65%,transparent)]' : ''}`
+            expanded || single ? '' : `overflow-hidden ${overflows ? '[mask-image:linear-gradient(to_bottom,black_65%,transparent)]' : ''}`
           }`}
         >
-          <ReviewText text={review.comment} className="text-slate-100" />
+          <ReviewText text={expanded ? review.comment : shortText} className="text-slate-100" />
         </div>
       </div>
 
-      {overflows && (
+      {showToggle && (
         <button
           type="button"
           tabIndex={isCopy ? -1 : undefined}
@@ -205,7 +226,7 @@ const ReviewCard: React.FC<{
 const UNMUTE_EVENT = 'feedback-video-unmute';
 
 const CONTROL_BUTTON =
-  'w-9 h-9 [@media(hover:none)]:w-11 [@media(hover:none)]:h-11 rounded-full flex items-center justify-center bg-black/55 backdrop-blur-md text-white border border-white/25 hover:bg-[#1769FF] hover:border-[#1769FF] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
+  'w-9 h-9 [@media(hover:none)]:w-11 [@media(hover:none)]:h-11 rounded-full flex items-center justify-center bg-black/60 sm:backdrop-blur-md text-white border border-white/25 hover:bg-[#1769FF] hover:border-[#1769FF] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
 
 /**
  * Video card with no text. Starts muted, loops, and plays automatically while on screen
@@ -249,7 +270,7 @@ const VideoCard: React.FC<{ video: VideoFeedbackItem; isCopy: boolean }> = ({ vi
   };
 
   return (
-    <article className={`${GLASS} group/video overflow-hidden`}>
+    <article className={`${GLASS} max-sm:backdrop-blur-none max-sm:border-2 max-sm:border-white/30 group/video overflow-hidden`}>
       <div className="relative aspect-9/16 bg-black/40">
         {/* Autoplay requires muted + playsInline (iOS) */}
         <LazyVideo
@@ -307,12 +328,12 @@ export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: 
     return (
       <SnapCarousel
         label={label}
-        className="pt-8 pb-6"
+        className="pt-2 pb-6"
         items={videos}
         getKey={(v) => v.id}
         loop
         renderItem={(v) => (
-          <div className="mx-auto w-[min(100%,calc(70svh*9/16))]">
+          <div className="mx-auto w-[min(calc(100%-2rem),calc(78svh*9/16))]">
             <VideoCard video={v} isCopy={false} />
           </div>
         )}
@@ -373,9 +394,11 @@ const ReviewsStrip: React.FC = () => {
 /** Section background: dark gradient with soft colour blobs so the glass cards read well */
 const GlassBackdrop: React.FC = () => (
   <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-    <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-[#1769FF]/30 blur-3xl" />
-    <div className="absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full bg-[#00A3FF]/20 blur-3xl" />
-    <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl" />
+    <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-[#1769FF]/30 blur-3xl max-sm:hidden" />
+    <div className="absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full bg-[#00A3FF]/20 blur-3xl max-sm:hidden" />
+    <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl max-sm:hidden" />
+    {/* Phones: the same glow as plain gradients (large blurred shapes glitch on some Android GPUs) */}
+    <div className="sm:hidden absolute inset-0 bg-[radial-gradient(60%_30%_at_0%_5%,rgba(23,105,255,0.3),transparent),radial-gradient(70%_35%_at_100%_45%,rgba(0,163,255,0.18),transparent)]" />
   </div>
 );
 

@@ -40,7 +40,7 @@ const RESUME_AFTER_MS = 6000;
 const SETTLE_MS = 140;
 
 const NAV_BUTTON =
-  'w-11 h-11 shrink-0 rounded-full flex items-center justify-center border border-white/15 bg-white/[0.07] backdrop-blur-md text-white transition-colors active:scale-95 hover:bg-[#1769FF] hover:border-[#1769FF] disabled:opacity-30 disabled:pointer-events-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF]';
+  'w-11 h-11 shrink-0 rounded-full flex items-center justify-center border border-white/15 bg-white/10 text-white transition-colors active:scale-95 hover:bg-[#1769FF] hover:border-[#1769FF] disabled:opacity-30 disabled:pointer-events-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF]';
 
 export function SnapCarousel<T>({
   items,

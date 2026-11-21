@@ -93,8 +93,8 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Phones and tablets: the 3 stats stacked one under another (left) and the logo (right),
                   as tall as the three cards together */}
-              <div className="lg:hidden grid grid-cols-2 items-stretch gap-3 sm:gap-5">
-                <div className="min-w-0 flex flex-col gap-1.5 sm:gap-3">
+              <div className="lg:hidden grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch gap-3 sm:gap-5">
+                <div className="min-w-0 flex flex-col gap-2 sm:gap-3">
                   {[
                     { value: `${BUSINESS_INFO.experienceYears}+`, label: 'Years Experience' },
                     { value: BUSINESS_INFO.clientsTrained, label: 'Clients' },
@@ -102,14 +102,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                   ].map((stat) => (
                     <div
                       key={stat.label}
-                      className={`flex-1 flex items-center gap-2 sm:gap-3 rounded-xl border px-3 py-2 sm:px-4 sm:py-3 transition-all ${
+                      className={`flex-1 flex flex-col items-center justify-center text-center rounded-xl border px-2 py-3 sm:px-4 sm:py-5 transition-all ${
                         highlightPlaceholders
                           ? 'bg-amber-950/40 border-amber-500/80'
                           : 'bg-[#1C2028]/80 border-slate-800'
                       }`}
                     >
-                      <div className="min-w-[2.75rem] sm:min-w-[4.5rem] shrink-0 text-lg sm:text-3xl font-display font-extrabold text-[#00A3FF] leading-none">{stat.value}</div>
-                      <div className="text-[length:max(11px,calc(11rem/16))] sm:text-sm font-semibold text-white leading-tight">
+                      {/* Number on top, label on the next line */}
+                      <div className="text-2xl sm:text-4xl font-display font-extrabold text-[#00A3FF] leading-none">{stat.value}</div>
+                      <div className="mt-1 sm:mt-1.5 text-[length:max(11.5px,calc(11.5rem/16))] sm:text-sm font-semibold text-white leading-tight">
                         {stat.label}
                       </div>
                     </div>

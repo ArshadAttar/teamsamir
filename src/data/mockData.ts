@@ -36,6 +36,10 @@ export const BUSINESS_INFO = {
     email: 'teamsamir7@gmail.com',
     workingHours: 'Mon – Sat: 6:00 AM – 10:00 PM,  IST',
   },
+  social: {
+    instagramHandle: 'teamsamir_india',
+    instagramUrl: 'https://www.instagram.com/teamsamir_india/',
+  },
   disclaimerClaims: 'Client and celebrity training statistics are supplied by the client and are presented as editable figures pending formal verification before public launch.',
 };
 

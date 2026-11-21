@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BUSINESS_INFO } from '../data/mockData';
-import { X, Check, ShieldCheck, ArrowRight } from 'lucide-react';
+import { X, Check, ShieldCheck, ArrowRight, ChevronDown } from 'lucide-react';
 
 interface ComparisonRow {
   feature: string;
@@ -46,7 +46,19 @@ interface UsVsThemProps {
   className?: string;
 }
 
+/** Phones: rows open at first (the rest show only their heading until tapped) */
+const INITIALLY_OPEN = [0, 1, 2];
+
 export const UsVsThem: React.FC<UsVsThemProps> = ({ onBookDemo, className = '' }) => {
+  const [openRows, setOpenRows] = useState<Set<number>>(() => new Set(INITIALLY_OPEN));
+  const toggleRow = (idx: number) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+
   return (
     <div className={`space-y-6 sm:space-y-8 ${className}`}>
       
@@ -83,15 +95,30 @@ export const UsVsThem: React.FC<UsVsThemProps> = ({ onBookDemo, className = '' }
                 idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
               } hover:bg-blue-50/30`}
             >
-              {/* Column 1: Feature / Criteria */}
+              {/* Column 1: Feature / Criteria. On phones it is an accordion heading (tap to show / hide the comparison) */}
               <div className="col-span-12 sm:col-span-4 space-y-0.5">
-                <div className="text-xs sm:text-sm font-display font-bold text-[#171A21]">
+                <button
+                  type="button"
+                  onClick={() => toggleRow(idx)}
+                  aria-expanded={openRows.has(idx)}
+                  aria-controls={`compare-row-${idx}`}
+                  className="sm:hidden w-full flex items-center justify-between gap-3 text-left text-sm font-display font-bold text-[#171A21] cursor-pointer"
+                >
+                  <span>{row.feature}</span>
+                  <ChevronDown
+                    className={`w-5 h-5 shrink-0 text-[#1769FF] transition-transform duration-200 ${openRows.has(idx) ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <div className="hidden sm:block text-sm font-display font-bold text-[#171A21]">
                   {row.feature}
                 </div>
               </div>
 
               {/* Comparison cards: stacked on phones (heading, Commercial Gyms, TeamSamir), side by side from 640px */}
-              <div className="col-span-12 sm:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 items-stretch">
+              <div
+                id={`compare-row-${idx}`}
+                className={`col-span-12 sm:col-span-8 ${openRows.has(idx) ? 'grid' : 'hidden'} sm:grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 items-stretch`}
+              >
                 {/* Column 2: Others (Red Cross in Circle) */}
                 <div className="flex items-start gap-2 p-2.5 sm:p-2 rounded-xl sm:rounded-none bg-rose-50/70 sm:bg-transparent border sm:border-0 border-rose-200">
                   <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5 border border-rose-300 shadow-2xs">

@@ -1,9 +1,10 @@
 import React from 'react';
 import { PageId } from '../types';
 import { TeamSamirLogo } from './TeamSamirLogo';
-import { MapPin, Phone, Mail, Clock, MessageSquare, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, ArrowUpRight, ShieldCheck, Instagram } from 'lucide-react';
 import { BUSINESS_INFO } from '../data/mockData';
 import { pageLink } from '../lib/routes';
+import { WhatsAppIcon } from './WhatsAppFloat';
 
 interface FooterProps {
   onNavigate: (page: PageId) => void;
@@ -32,6 +33,19 @@ const shortHours = (hours: string) =>
     .replace(/:00/g, '')
     .replace(/\s*–\s*/g, '–')
     .trim();
+
+/**
+ * On phones and tablets, open the profile in the same tab: Android and iOS hand an
+ * instagram.com link to the Instagram app when it is installed (a new tab often stays in
+ * the browser). Without the app, instagram.com opens, where people can log in or get the
+ * app. Computers keep the normal new-tab link.
+ */
+const openInstagram = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+  if (!window.matchMedia('(hover: none) and (pointer: coarse)').matches) return;
+  e.preventDefault();
+  window.location.href = BUSINESS_INFO.social.instagramUrl;
+};
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
   const whatsappHref = `https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
@@ -130,7 +144,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#16834A] shrink-0" />
+                <WhatsAppIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#25D366] shrink-0" />
                 <a
                   href={whatsappHref}
                   target="_blank"
@@ -142,6 +156,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
                   <span className="sm:hidden sr-only"> (WhatsApp)</span>
                 </a>
               </div>
+            </div>
+
+            {/* Instagram (opens the Instagram app when it is installed, otherwise instagram.com) */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <a
+                href={BUSINESS_INFO.social.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={openInstagram}
+                aria-label={`TeamSamir on Instagram (@${BUSINESS_INFO.social.instagramHandle})`}
+                className="group inline-flex items-center gap-2 sm:gap-2.5 sm:py-1 lg:py-0 text-white hover:text-[#E1306C] font-medium transition-colors"
+              >
+                <span className="w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-[5px] flex items-center justify-center text-white bg-[linear-gradient(45deg,#F58529,#DD2A7B_50%,#8134AF_75%,#515BD4)] shrink-0">
+                  <Instagram className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </span>
+                <span>@{BUSINESS_INFO.social.instagramHandle}</span>
+              </a>
             </div>
 
             {/* Email + working hours */}

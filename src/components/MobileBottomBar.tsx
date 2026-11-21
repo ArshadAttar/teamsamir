@@ -77,6 +77,8 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
   };
 
   const discRadius = radius + 58;
+  // Fits inside the arc, clear of the item labels
+  const logoSize = Math.round(Math.min(84, radius * 0.62));
 
   return (
     <MotionConfig reducedMotion="user">
@@ -109,6 +111,21 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.4, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            />
+
+            {/* Logo in the middle of the half circle */}
+            <motion.img
+              src="/media/shared/logo/logo-without-bg.webp"
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              onClick={closeMenu}
+              className="absolute left-1/2 object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+              style={{ width: logoSize, height: logoSize, bottom: BAR_HEIGHT + 6, x: '-50%' }}
+              initial={{ scale: 0.3, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.3, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30, delay: 0.05 }}
             />
 
             <nav aria-label="All pages">
