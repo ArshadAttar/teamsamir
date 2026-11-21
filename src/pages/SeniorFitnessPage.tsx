@@ -3,6 +3,7 @@ import { motion, MotionConfig } from 'motion/react';
 import { PageId } from '../types';
 import { BUSINESS_INFO } from '../data/mockData';
 import { img } from '../data/seniorFitnessMedia';
+import { Watermark } from '../components/Watermark';
 import { SeniorTransformations } from '../components/senior-fitness/SeniorTransformations';
 import {
   Activity,
@@ -65,6 +66,7 @@ const SeniorImage: React.FC<{
   priority?: boolean;
 }> = ({ src, alt, className = '', imgClassName = '', fill = false, position, priority = false }) => {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   return (
     <motion.div
@@ -88,6 +90,7 @@ const SeniorImage: React.FC<{
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
             decoding="async"
+            onLoad={() => setLoaded(true)}
             onError={() => setFailed(true)}
             className="w-full h-full object-cover"
             style={position ? { objectPosition: position } : undefined}
@@ -98,6 +101,7 @@ const SeniorImage: React.FC<{
           />
         </div>
       )}
+      {loaded && !failed && <Watermark />}
     </motion.div>
   );
 };

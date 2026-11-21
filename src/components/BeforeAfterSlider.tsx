@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ArrowLeftRight, Sparkles, CheckCircle2, Award } from 'lucide-react';
+import { Watermark } from './Watermark';
 
 interface CaseStudy {
   id: string;
@@ -135,6 +136,8 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           className="absolute inset-0 w-full h-full object-cover object-center"
           referrerPolicy="no-referrer"
         />
+
+        <Watermark />
 
         {/* Layer 1 Overlay / Gradient & Labels */}
         <div className="absolute top-4 right-4 bg-emerald-600/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 z-10 pointer-events-none">

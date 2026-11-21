@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookingIntent, PageId, ServiceItem, WeekDay } from '../types';
 import { SERVICES } from '../data/mockData';
 import { HeroReveal } from '../components/HeroReveal';
+import { Watermark } from '../components/Watermark';
 import {
   ArrowRight,
   CheckCircle,
@@ -240,6 +241,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
+                        <Watermark />
                         <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md text-white text-[length:max(11px,calc(11rem/16))] px-2.5 py-1 rounded-md font-medium">
                           {service.format}
                         </div>

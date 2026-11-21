@@ -6,6 +6,7 @@ import { CountUpStat } from '../components/CountUpStat';
 import { ClientFeedback } from '../components/ClientFeedback';
 import { ProcessesDraw } from '../components/ProcessesDraw';
 import { UsVsThem } from '../components/UsVsThem';
+import { Watermark } from '../components/Watermark';
 import {
   ArrowRight,
   Calendar,
@@ -18,19 +19,6 @@ const HEADLINE_OPTIONS = [
   'World-Class Fitness Coaching, Powered by K11-Certified Experts.',
 ];
 const HEADLINE_ROTATE_MS = 5000;
-const HEADLINE_STORAGE_KEY = 'ts-hero-headline-index';
-
-// Shows the next headline on every page load/refresh (remembered in this browser only)
-const getInitialHeadlineIndex = (): number => {
-  try {
-    const last = Number(localStorage.getItem(HEADLINE_STORAGE_KEY));
-    const next = Number.isInteger(last) && last >= 0 ? (last + 1) % HEADLINE_OPTIONS.length : 0;
-    localStorage.setItem(HEADLINE_STORAGE_KEY, String(next));
-    return next;
-  } catch {
-    return Math.floor(Math.random() * HEADLINE_OPTIONS.length);
-  }
-};
 
 interface HomePageProps {
   onNavigate: (page: PageId) => void;
@@ -45,8 +33,9 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenService,
   highlightPlaceholders,
 }) => {
-  // Rotating hero headline: a different one on each page load, then the next one every 5 seconds
-  const [headlineIndex, setHeadlineIndex] = useState(getInitialHeadlineIndex);
+  // Rotating hero headline: always opens on the 1st one (fully visible straight away, also in the
+  // prerendered HTML), then the next one every 5 seconds with the word-by-word reveal
+  const [headlineIndex, setHeadlineIndex] = useState(0);
   // Rotation pauses while the user hovers the headline so they can read it in full
   const [isHeadlinePaused, setIsHeadlinePaused] = useState(false);
 
@@ -84,7 +73,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onMouseLeave={() => setIsHeadlinePaused(false)}
               >
                 {/* Always as tall as the longest headline, so nothing below moves when it rotates */}
-                <HeroReveal sentence={HEADLINE_OPTIONS[headlineIndex]} reserveFor={HEADLINE_OPTIONS} />
+                <HeroReveal sentence={HEADLINE_OPTIONS[headlineIndex]} reserveFor={HEADLINE_OPTIONS} instantFirst />
               </div>
 
               {/* Supporting Copy (desktop here; phones and tablets show it after the logo) */}
@@ -309,6 +298,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />
+                    <Watermark />
                     <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-xs text-white text-[length:max(11px,calc(11rem/16))] px-2.5 py-1 rounded-md font-medium">
                       {service.format}
                     </div>

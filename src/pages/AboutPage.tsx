@@ -75,7 +75,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
             <div className="lg:col-span-4">
               <div className="rounded-2xl overflow-hidden bg-slate-900 border border-[#E1E6EF] shadow-lg relative aspect-[400/363] sm:aspect-[1000/1089]">
                 <LazyVideo
-                  src="/media/about-samir/intro/videos/about-page.mp4"
+                  src="/media/about-samir/intro/videos/about-page-wm.mp4"
                   poster="/media/about-samir/intro/photos/hero_samir_ts_fitness_1792417382753.webp"
                   autoPlay
                   muted

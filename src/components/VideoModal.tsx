@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TransformationItem } from '../types';
 import { X, Play, Pause, RotateCcw, Volume2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Watermark } from './Watermark';
 
 interface VideoModalProps {
   item: TransformationItem | null;
@@ -74,6 +75,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({ item, onClose, onBookDem
             className={`w-full h-full object-cover transition-opacity duration-300 ${isPlaying ? 'opacity-90' : 'opacity-60'}`}
             referrerPolicy="no-referrer"
           />
+          <Watermark />
 
           {/* Central Play/Pause trigger */}
           <button

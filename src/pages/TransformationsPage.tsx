@@ -6,6 +6,7 @@ import { CLIENT_TRANSFORMATIONS, TRANSFORMATION_VIDEOS } from '../data/mockData'
 import { FeedbackVideoStrip } from '../components/ClientFeedback';
 import { SnapCarousel } from '../components/SnapCarousel';
 import { useIsPhone } from '../lib/useMediaQuery';
+import { Watermark } from '../components/Watermark';
 
 /**
  * Transformations page. Exactly three sections:
@@ -351,6 +352,8 @@ const BeforeAfterPhoto: React.FC<{
           />
         </>
       )}
+
+      {state === 'loaded' && <Watermark />}
 
       {state === 'loading' && <div className="absolute inset-0 animate-pulse bg-white/[0.04]" />}
 

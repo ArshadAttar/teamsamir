@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface HeroRevealProps {
   sentence?: string;
@@ -13,6 +13,11 @@ interface HeroRevealProps {
    * below never jumps when the headline changes.
    */
   reserveFor?: string[];
+  /**
+   * Show the first sentence fully at once (also in the prerendered HTML), with no word-by-word
+   * reveal, so the headline is readable as soon as the page appears. Later sentences still animate.
+   */
+  instantFirst?: boolean;
 }
 
 const DEFAULT_HEADING_CLASS =
@@ -24,12 +29,17 @@ export const HeroReveal: React.FC<HeroRevealProps> = ({
   highlightWords = [],
   headingClassName = DEFAULT_HEADING_CLASS,
   reserveFor,
+  instantFirst = false,
 }) => {
-  const [revealedIndex, setRevealedIndex] = useState(-1);
+  const [revealedIndex, setRevealedIndex] = useState(instantFirst ? Number.MAX_SAFE_INTEGER : -1);
   const words = sentence.split(' ');
+  // The sentence that was shown instantly; cleared once the headline changes
+  const instantSentence = useRef<string | null>(instantFirst ? sentence : null);
 
   // Staggered word-by-word reveal, replayed whenever the sentence changes
   useEffect(() => {
+    if (sentence === instantSentence.current) return;
+    instantSentence.current = null;
     setRevealedIndex(-1);
     const timeouts = words.map((_, idx) =>
       setTimeout(() => setRevealedIndex(idx), idx * 70 + 60)

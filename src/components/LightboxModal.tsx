@@ -1,6 +1,7 @@
 import React from 'react';
 import { TransformationItem } from '../types';
 import { X, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Watermark } from './Watermark';
 
 interface LightboxModalProps {
   item: TransformationItem | null;
@@ -52,6 +53,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose, onB
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
+                <Watermark />
                 <div className="absolute bottom-2 left-2 right-2 bg-black/75 backdrop-blur-xs text-white text-xs px-2.5 py-1.5 rounded-md">
                   {item.beforeLabel}
                 </div>
@@ -70,6 +72,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose, onB
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
+                <Watermark />
                 <div className="absolute bottom-2 left-2 right-2 bg-[#1769FF]/90 backdrop-blur-xs text-white text-xs px-2.5 py-1.5 rounded-md font-medium">
                   {item.afterLabel}
                 </div>

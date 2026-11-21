@@ -213,6 +213,23 @@ svg {
   user-drag: none;
 }
 
+/* Faint repeating "TeamSamir" watermark over photos (src/components/Watermark.tsx). It is part of
+   the page, so it shows in screenshots and screen recordings. Videos carry a burned-in mark instead.
+   No z-index: it is placed right after the <img>, so it paints over the photo and under any label,
+   badge or button that comes later or has a z-index, and never over elements outside the photo.
+   Clicks pass through. */
+.ts-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160'%3E%3Cg font-family='Arial,Helvetica,sans-serif' font-size='17' font-weight='700' fill='%23fff' fill-opacity='.26' stroke='%23000' stroke-opacity='.1' stroke-width='.6' text-anchor='middle'%3E%3Ctext x='60' y='45' transform='rotate(-24 60 45)'%3ETeamSamir%3C/text%3E%3Ctext x='180' y='125' transform='rotate(-24 180 125)'%3ETeamSamir%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-size: 240px 160px;
+}
+@media (max-width: 639px) {
+  .ts-watermark { background-size: 180px 120px; }
+}
+
 /* Printing / "Save as PDF" shows a notice instead of the page */
 @media print {
   body * {

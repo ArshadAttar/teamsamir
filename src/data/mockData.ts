@@ -613,13 +613,13 @@ export const REVIEWS: ReviewItem[] = [
 ];
 
 // Client feedback videos on the Home page (muted, autoplay, loop; no text on the cards).
-// Files: public/media/home/video-feedback/videos/feedback-01.mp4 … feedback-13.mp4, web copies
+// Files: public/media/home/video-feedback/videos/feedback-01-wm.mp4 … feedback-13-wm.mp4 (watermark burned in, scripts/watermark-video.sh), web copies
 // (480px wide, mono audio) of the originals in ../media-originals/Website/feedback-video/.
 // To add a clip, add the file with the next number and raise VIDEO_FEEDBACK_COUNT.
 const VIDEO_FEEDBACK_COUNT = 13;
 export const VIDEO_FEEDBACK: VideoFeedbackItem[] = Array.from({ length: VIDEO_FEEDBACK_COUNT }, (_, i) => {
   const n = String(i + 1).padStart(2, '0');
-  return { id: `video-${n}`, src: `/media/home/video-feedback/videos/feedback-${n}.mp4` };
+  return { id: `video-${n}`, src: `/media/home/video-feedback/videos/feedback-${n}-wm.mp4` };
 });
 
 // ---------------------------------------------------------------------------
@@ -668,10 +668,10 @@ export const CLIENT_TRANSFORMATIONS: ClientTransformation[] = [
 
 // Client videos on the Transformations page ("Training in Motion"), shown the same way as the
 // Home page feedback videos (muted, autoplay, loop, no text). This page has its own copies:
-// public/media/transformations/video-gallery/videos/feedback-NN.mp4. To add a clip, add the
+// public/media/transformations/video-gallery/videos/feedback-NN-wm.mp4. To add a clip, add the
 // file with the next number and raise TRANSFORMATION_VIDEO_COUNT.
 const TRANSFORMATION_VIDEO_COUNT = 13;
 export const TRANSFORMATION_VIDEOS: VideoFeedbackItem[] = Array.from({ length: TRANSFORMATION_VIDEO_COUNT }, (_, i) => {
   const n = String(i + 1).padStart(2, '0');
-  return { id: `transformation-video-${n}`, src: `/media/transformations/video-gallery/videos/feedback-${n}.mp4` };
+  return { id: `transformation-video-${n}`, src: `/media/transformations/video-gallery/videos/feedback-${n}-wm.mp4` };
 });

@@ -3,10 +3,11 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
 import { img } from '../../data/seniorFitnessMedia';
 import { PROTECTED_VIDEO_PROPS } from '../../lib/videoProtection';
+import { Watermark } from '../Watermark';
 
-// Real senior client sessions (recorded live online coaching). Clips: senior-NN.mp4 (720x480, ~18 s);
+// Real senior client sessions (recorded live online coaching). Clips: senior-NN-wm.mp4 (720x480, TeamSamir watermark burned in, ~18 s);
 // thumbnails: senior-video-NN.webp (frame at 5 s). Originals are in ../media-originals/Website/senior-fitness-video/.
-const clip = (n: number) => `/media/senior-fitness/transformations/videos/senior-0${n}.mp4`;
+const clip = (n: number) => `/media/senior-fitness/transformations/videos/senior-0${n}-wm.mp4`;
 const thumb = (n: number) => `/media/senior-fitness/transformations/photos/senior-video-0${n}.webp`;
 const seniorVideo = (n: number, title: string, desc: string): Video => ({
   src: thumb(n),
@@ -517,6 +518,7 @@ export const SeniorTransformations: React.FC = () => {
               >
                 <span className="relative block aspect-[16/10] rounded-[10px] overflow-hidden">
                   <img decoding="async" src={v.src} alt="" loading="lazy" style={{ objectPosition: v.position }} className="w-full h-full object-cover" />
+                  <Watermark />
                   <span className="absolute right-1.5 bottom-1.5 bg-black/70 rounded-md px-1.5 text-[length:max(11px,calc(11rem/16))] tabular-nums">{v.duration}</span>
                 </span>
                 <span className="min-w-0">

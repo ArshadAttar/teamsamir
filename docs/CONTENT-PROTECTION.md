@@ -29,6 +29,8 @@ Date: 22 Nov 2026 · Site: https://teamsamir.vercel.app · All pages (Home, Serv
 | 9 | Other websites can't embed your photos and videos in their pages (hotlinking): `Cross-Origin-Resource-Policy: same-origin` on `/media/` | Server header (`vercel.json`) | ✅ Tested locally; live after deploy |
 | 10 | Share-preview images (`/media/shared/og/`) left open, so WhatsApp, Facebook and LinkedIn link previews keep working | Server header | ✅ Tested |
 | 11 | Windows **PrtSc** key: the screenshot copied to the clipboard is replaced with a notice | Desktop browsers on Windows | ✅ Implemented (limited, see below) |
+| 12 | **Photo watermark:** a faint repeating diagonal "TeamSamir" over every content photo (service cards, Services, Senior Fitness photos and video thumbnails, Transformations before & after cards and lightbox, older modals). It is drawn by the page, so it is in every screenshot and screen recording, on phones too. Logos and the small round review avatars are left clean. | All pages (`src/components/Watermark.tsx`, `.ts-watermark` in `index.css`) | ✅ Added 22 Nov 2026 |
+| 13 | **Video watermark burned into the files:** small TeamSamir logo + name in the bottom-left corner and a faint "TeamSamir" in the centre (so cropping the corner doesn't remove it). It stays in downloads, screen recordings and screenshots. All 36 site clips re-encoded as `*-wm.mp4` (new names, so no stale cached copies). | Home, Transformations, Senior Fitness, About (`scripts/watermark-video.sh`) | ✅ Added 22 Nov 2026 |
 
 **Kept working (tested):**
 - **Form fields:** typing, selecting, copy/paste and right-click in the enquiry form, the drop-downs, and submitting the form.
@@ -63,9 +65,13 @@ No new packages and no paid services.
 | **Phone camera** | Pointing another phone at the screen can't be prevented by anything. |
 | **Search engines** | Google still indexes your pages and images (on purpose, for SEO). Image search results show your photos. |
 
-**Ways to make copies less useful (optional, not done):**
-- **Visible watermarks on photos:** the before & after composites already carry the TeamSamir logo. You could add a watermark to the other photos too: a design change, done to the image files.
-- **Watermark on videos:** a small "TeamSamir" logo burned into the video files (re-encode with ffmpeg). Free, but it changes how the videos look.
+**Watermarks (items 12 and 13):** screenshots and recordings can't be blocked, so instead every copy carries the TeamSamir name.
+- **Photos:** the mark is an overlay on the page. It appears in screenshots and recordings, but a photo file opened directly by its address (developer tools) has no overlay; the before & after composites also have the logo inside the image file.
+- **Videos:** the mark is inside the file, so it is in every copy.
+- Watermarks deter reuse but don't make it impossible: a determined person could blur or edit them out.
+- **New videos:** run `sh scripts/watermark-video.sh in.mp4 out-wm.mp4` and use the `-wm` file. **New photos:** add `<Watermark />` inside the photo's container (it must be `relative` and clip overflow).
+
+**Other options (not done):**
 - **Lower-resolution web copies:** the site already serves reduced copies (480–1600 px). Originals stay outside the website (`../media-originals/`), so the full-quality files are never public.
 
 ## Accessibility note

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { Home, Dumbbell, HeartPulse, TrendingUp, UserRound, X, ClipboardList } from 'lucide-react';
+import { Home, Dumbbell, HeartPulse, TrendingUp, UserRound, X } from 'lucide-react';
 import { PageId } from '../types';
 import { pageLink } from '../lib/routes';
 
@@ -128,22 +128,6 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
               transition={{ type: 'spring', stiffness: 380, damping: 30, delay: 0.05 }}
             />
 
-            {/* Enquiry Form: highlighted button on top of the half circle (a sixth circle on the arc
-                would make the top labels overlap on phones) */}
-            <motion.a
-              {...pageLink('contact', go)}
-              aria-current={currentPage === 'contact' ? 'page' : undefined}
-              className="absolute left-1/2 inline-flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full bg-white text-[#1769FF] text-[length:max(13px,calc(13rem/16))] font-bold border-2 border-[#1769FF] shadow-[0_10px_30px_-6px_rgba(23,105,255,0.6)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70 cursor-pointer"
-              style={{ bottom: BAR_HEIGHT + discRadius + 12, x: '-50%' }}
-              initial={{ y: 30, scale: 0.6, opacity: 0 }}
-              animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: 30, scale: 0.6, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28, delay: 0.12 }}
-            >
-              <ClipboardList className="w-4 h-4" />
-              Enquiry Form
-            </motion.a>
-
             <nav aria-label="All pages">
               {MENU_ITEMS.map(({ id, label, icon: Icon }, i) => {
                 const rad = (ANGLES[i] * Math.PI) / 180;
@@ -175,14 +159,13 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
                       <Icon className="w-5 h-5" />
                     </span>
                     {/* Absolutely placed so a long label never widens the item (keeps the circle centred).
-                        The current page shows only its highlighted circle: its name is hidden on screen
-                        (still read out by screen readers). */}
+                        Every page shows its name; the current page's name is highlighted like its circle. */}
                     <span
-                      className={
+                      className={`absolute top-[56px] left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full text-[length:max(11px,calc(11rem/16))] font-semibold ${
                         isActive
-                          ? 'sr-only'
-                          : 'absolute top-[56px] left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#0B1220]/55 backdrop-blur-sm text-[length:max(11px,calc(11rem/16))] font-semibold text-white'
-                      }
+                          ? 'bg-white text-[#1769FF] font-bold ring-2 ring-[#1769FF] shadow-md'
+                          : 'bg-[#0B1220]/55 backdrop-blur-sm text-white'
+                      }`}
                     >
                       {label}
                     </span>
