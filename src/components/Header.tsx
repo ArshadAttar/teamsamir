@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageId } from '../types';
 import { TeamSamirLogo } from './TeamSamirLogo';
 import { Calendar } from 'lucide-react';
@@ -7,14 +7,12 @@ import { pageLink } from '../lib/routes';
 interface HeaderProps {
   currentPage: PageId;
   onNavigate: (page: PageId) => void;
-  onOpenMobileMenu: () => void;
   onBookDemo: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentPage,
   onNavigate,
-  onOpenMobileMenu,
   onBookDemo,
 }) => {
   // Clean navigation items without any numbering
@@ -26,28 +24,79 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'about', label: 'About Samir' },
   ];
 
-  // Hide the header while scrolling down the page, bring it back on any scroll up.
+  // Hide the header while the user scrolls down, bring it back when they scroll up.
+  // Only the user's own scrolling counts: layout changes (the rotating hero headline,
+  // images and videos loading, carousels) also fire scroll events, and those must not
+  // make the header slide in and out on its own.
   // While it is hidden, a floating "Free Consultation" button takes its place.
   const [isHidden, setIsHidden] = useState(false);
-  const lastY = useRef(0);
 
   useEffect(() => {
+    let lastY = window.scrollY;
+    let travel = 0; // distance scrolled in the current direction
+    let lastInput = 0; // time of the last wheel / touch / key / scrollbar input
+    let touching = false;
     let ticking = false;
+    // Touch scrolling keeps moving (momentum) for a while after the finger lifts
+    const INPUT_WINDOW_MS = 1200;
+    const THRESHOLD = 24;
+
+    const markInput = () => {
+      lastInput = performance.now();
+    };
+    const onTouchStart = () => {
+      touching = true;
+      markInput();
+    };
+    const onTouchEnd = () => {
+      touching = false;
+      markInput();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key)) markInput();
+    };
+
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const delta = y - lastY.current;
-        if (y < 80) setIsHidden(false);           // always visible near the top
-        else if (delta > 6) setIsHidden(true);    // scrolling down
-        else if (delta < -6) setIsHidden(false);  // scrolling up
-        if (Math.abs(delta) > 6 || y < 80) lastY.current = y;
         ticking = false;
+        const y = Math.max(0, window.scrollY);
+        const delta = y - lastY;
+        lastY = y;
+        if (y < 80) {
+          travel = 0;
+          setIsHidden(false); // always visible near the top
+          return;
+        }
+        const userScrolling = touching || performance.now() - lastInput < INPUT_WINDOW_MS;
+        if (!userScrolling || delta === 0) return;
+        // Restart the count whenever the direction changes
+        travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
+        if (travel > THRESHOLD) setIsHidden(true); // scrolling down, towards the footer
+        else if (travel < -THRESHOLD) setIsHidden(false); // scrolling up, towards the top
       });
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+
+    const opts = { passive: true } as const;
+    window.addEventListener('scroll', onScroll, opts);
+    window.addEventListener('wheel', markInput, opts);
+    window.addEventListener('touchstart', onTouchStart, opts);
+    window.addEventListener('touchmove', markInput, opts);
+    window.addEventListener('touchend', onTouchEnd, opts);
+    window.addEventListener('touchcancel', onTouchEnd, opts);
+    window.addEventListener('pointerdown', markInput, opts); // dragging the scrollbar
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('wheel', markInput);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', markInput);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      window.removeEventListener('pointerdown', markInput);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   return (
@@ -59,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
     >
       {/* Primary Top Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-18 lg:h-20 flex items-center justify-between gap-2 sm:gap-6">
-        
+
         {/* Zone 1: Brand Wordmark (Compact on mobile so it never crowds controls) */}
         <a
           {...pageLink('home', onNavigate)}
@@ -98,47 +147,30 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Direct Actions & Compact Mobile 3-Bars Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        
-          {/* Primary CTA (Desktop and Tablet only) */}
-          <button
-            onClick={onBookDemo}
-            className="hidden sm:inline-flex items-center justify-center min-h-[44px] px-4 lg:px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
-          >
-            Free Consultation
-          </button>
-
-          {/* Compact, Sleek Mobile Three Bars Menu Button */}
-          <button
-            type="button"
-            onClick={onOpenMobileMenu}
-            className="lg:hidden flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-[#1769FF] text-white hover:bg-[#0B3D91] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769FF] shrink-0 shadow-sm cursor-pointer border border-blue-400"
-            aria-label="Open mobile navigation menu (three bars for home, about, services, contact)"
-            aria-expanded="false"
-            title="Three bars menu: Home, About, Services, Contact"
-          >
-            {/* The 3 Bold Horizontal Bars */}
-            <div className="flex flex-col justify-between w-3.5 h-2.5 shrink-0" aria-hidden="true">
-              <span className="w-full h-0.5 bg-white rounded-full"></span>
-              <span className="w-full h-0.5 bg-white rounded-full"></span>
-              <span className="w-full h-0.5 bg-white rounded-full"></span>
-            </div>
-            <span className="text-[length:max(11px,calc(11rem/16))] font-bold tracking-wider uppercase">Menu</span>
-          </button>
-        </div>
+        {/* Zone 3: Primary CTA on every screen (the page menu on phones and tablets is in MobileBottomBar) */}
+        <button
+          onClick={onBookDemo}
+          className="inline-flex items-center justify-center gap-1.5 min-h-[38px] sm:min-h-[44px] px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
+        >
+          <Calendar className="w-3.5 h-3.5 sm:hidden shrink-0" />
+          Free Consultation
+        </button>
 
       </div>
 
-      {/* Mobile Sticky Quick Navigation Bar (Compact, proportional tabs) */}
-      <div className="lg:hidden bg-slate-50/95 border-t border-[#E1E6EF] px-2 sm:px-4 py-1 overflow-x-auto no-scrollbar flex items-center gap-1 sm:gap-1.5 scroll-smooth">
+      {/* Mobile quick navigation tabs: the same padding on all four sides of the strip */}
+      <nav
+        aria-label="Quick page links"
+        className="lg:hidden bg-slate-50/95 border-t border-[#E1E6EF] p-1.5 sm:px-4 overflow-x-auto no-scrollbar flex items-center gap-1 sm:gap-1.5 scroll-smooth"
+      >
         {navItems.map((item) => {
           const isActive = currentPage === item.id;
           return (
             <a
               key={item.id}
               {...pageLink(item.id, onNavigate)}
-              className={`cursor-pointer whitespace-nowrap text-[length:max(11px,calc(11rem/16))] sm:text-xs font-medium min-h-[34px] py-1.5 px-3 rounded-md transition-all shrink-0 ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`cursor-pointer whitespace-nowrap text-[length:max(11px,calc(11rem/16))] sm:text-xs font-medium leading-none py-2.5 px-3 rounded-md transition-all shrink-0 ${
                 isActive
                   ? 'bg-[#1769FF] text-white font-semibold shadow-xs'
                   : 'text-[#646B78] hover:text-[#171A21] hover:bg-slate-200/50'
@@ -148,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
             </a>
           );
         })}
-      </div>
+      </nav>
     </header>
 
     {/* Floating "Free Consultation" shown only while the header is hidden */}

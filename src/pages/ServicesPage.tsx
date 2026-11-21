@@ -197,9 +197,9 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
             <HeroReveal
               sentence="Your fitness. Your goals. Our expertise"
               highlightWords={['Our','expertise']}
-              headingClassName="flex flex-nowrap whitespace-nowrap font-extrabold leading-tight text-[clamp(0.75rem,3.4vw,2.25rem)]"
+              headingClassName="flex flex-nowrap whitespace-nowrap font-extrabold leading-tight text-[4.2vw] sm:text-[clamp(0.75rem,3.4vw,2.25rem)]"
             />
-            <p className="max-w-3xl text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed">
+            <p className="max-w-3xl text-sm lg:text-base text-slate-300 leading-relaxed">
               Train with K11-Certified Fitness Coaches, Backed by One of the World’s Leading Fitness Education Institutes.
             </p>
           </div>
@@ -210,10 +210,10 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
       <section className="pt-5 pb-8 sm:pt-6 sm:pb-10 lg:pt-8 lg:pb-10 border-b border-[#E1E6EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
           <div className="max-w-3xl space-y-2 sm:space-y-3">
-            <h2 className="text-xl sm:text-3xl lg:text-4xl font-display font-bold text-[#171A21] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-[#171A21] tracking-tight">
               Detailed Service Portfolio
             </h2>
-            <p className="text-xs sm:text-base text-[#646B78] leading-relaxed">
+            <p className="text-sm sm:text-base text-[#646B78] leading-relaxed">
               Tap <strong className="text-[#171A21]">Plan Details</strong> on any program to see what's included, your monthly schedule and the plans you can choose from.
             </p>
           </div>
@@ -252,10 +252,10 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
                         <div className="text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold text-[#1769FF] uppercase tracking-wider">
                           Program 0{index + 1}
                         </div>
-                        <h3 className="text-lg sm:text-2xl font-display font-bold text-[#171A21] mt-0.5 sm:mt-1">
+                        <h3 className="text-xl sm:text-2xl font-display font-bold text-[#171A21] mt-0.5 sm:mt-1">
                           {service.title}
                         </h3>
-                        <p className="text-xs sm:text-sm text-[#646B78] leading-relaxed mt-1.5 sm:mt-2">
+                        <p className="text-sm text-[#646B78] leading-relaxed mt-1.5 sm:mt-2">
                           {service.fullDesc}
                         </p>
                       </div>
@@ -310,8 +310,8 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
         </div>
       </section>
 
-      {/* 4-Step Training Approach + "Not sure?" CTA, kept compact so both fit on one screen */}
-      <section className="py-8 sm:py-10 bg-slate-50 border-b border-[#E1E6EF]">
+      {/* "Not sure?" CTA (hidden on phones) */}
+      <section className="hidden sm:block py-8 sm:py-10 bg-slate-50 border-b border-[#E1E6EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 sm:space-y-6">
           <div className="rounded-2xl bg-[#EEF5FF] border border-[#1769FF]/20 p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 text-center md:text-left">
             <div className="space-y-1">

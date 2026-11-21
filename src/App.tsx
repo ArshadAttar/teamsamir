@@ -4,7 +4,6 @@ import { applyHead } from './lib/seo';
 import { BookingIntent, PageId, TransformationItem } from './types';
 import { SERVICES } from './data/mockData';
 import { Header } from './components/Header';
-import { MobileDrawer } from './components/MobileDrawer';
 import { Footer } from './components/Footer';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { LightboxModal } from './components/LightboxModal';
@@ -48,7 +47,6 @@ export default function App({ initialPage }: AppProps) {
   useEffect(() => {
     applyHead(currentPage);
   }, [currentPage]);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [highlightPlaceholders, setHighlightPlaceholders] = useState(false);
   // What the enquiry page shows (plans + preselected plan + heading), set by the button clicked.
   // bookingKey remounts the page so every click starts a fresh form.
@@ -102,7 +100,6 @@ export default function App({ initialPage }: AppProps) {
       <Header
         currentPage={currentPage as PageId}
         onNavigate={handleNavigate}
-        onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
         onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Your Free Call' })}
       />
 
@@ -179,25 +176,11 @@ export default function App({ initialPage }: AppProps) {
         onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Your Free Demo Session' })}
       />
 
-      {/* 5. Mobile Sticky Bottom Action Bar (<15% viewport height) */}
-      <MobileBottomBar
-        currentPage={currentPage as PageId}
-        onNavigate={handleNavigate}
-        onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
-        onBookDemo={() => handleBookDemo()}
-      />
+      {/* 5. Mobile bottom bar: Home, Menu (half-circle page menu), Transformations */}
+      <MobileBottomBar currentPage={currentPage as PageId} onNavigate={handleNavigate} />
 
       {/* Floating WhatsApp button (bottom-right, every page) */}
       <WhatsAppFloat />
-
-      {/* 6. Accessible Slide-in Mobile Drawer */}
-      <MobileDrawer
-        isOpen={isMobileDrawerOpen}
-        onClose={() => setIsMobileDrawerOpen(false)}
-        currentPage={currentPage as PageId}
-        onNavigate={handleNavigate}
-        onBookDemo={() => handleBookDemo()}
-      />
 
       {/* 7. Case Study Lightbox Modal */}
       <LightboxModal

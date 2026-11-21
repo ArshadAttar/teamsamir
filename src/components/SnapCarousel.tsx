@@ -7,6 +7,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
  * (or a "3 / 13" counter when there are many items) sit below. Used for the review,
  * video and before & after galleries on screens narrower than 640px; wider screens keep
  * their multi-card strips.
+ *
+ * `loop`: the last item is followed by the first one (and the first preceded by the last),
+ * so the carousel keeps moving in the same direction instead of rewinding. A copy of the
+ * last item sits before the first and a copy of the first after the last; when the
+ * carousel settles on a copy it jumps, without animation, to the real item.
  */
 interface SnapCarouselProps<T> {
   items: T[];
@@ -20,6 +25,8 @@ interface SnapCarouselProps<T> {
   paused?: boolean;
   /** Size the carousel to the current item, so a short item leaves no empty space */
   adaptiveHeight?: boolean;
+  /** Endless: after the last item comes the first again (and before the first, the last) */
+  loop?: boolean;
   /** Called when the visible item changes */
   onActiveChange?: (index: number) => void;
   className?: string;
@@ -29,6 +36,8 @@ interface SnapCarouselProps<T> {
 const MAX_DOTS = 8;
 /** After a swipe or tap, wait this long before auto-advancing again */
 const RESUME_AFTER_MS = 6000;
+/** Scrolling is treated as finished after this long without a scroll event */
+const SETTLE_MS = 140;
 
 const NAV_BUTTON =
   'w-11 h-11 shrink-0 rounded-full flex items-center justify-center border border-white/15 bg-white/[0.07] backdrop-blur-md text-white transition-colors active:scale-95 hover:bg-[#1769FF] hover:border-[#1769FF] disabled:opacity-30 disabled:pointer-events-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3FF]';
@@ -41,40 +50,73 @@ export function SnapCarousel<T>({
   autoAdvanceMs = 0,
   paused = false,
   adaptiveHeight = false,
+  loop = false,
   onActiveChange,
   className = '',
 }: SnapCarouselProps<T>) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
+  const count = items.length;
+  const looping = loop && count > 1;
+  /** Index of the first real item among the slides (1 when a copy of the last item comes first) */
+  const offset = looping ? 1 : 0;
+  const slideCount = count + 2 * offset;
+
+  // `slide` is the position among all slides (copies included); `active` is the real item
+  const [slide, setSlide] = useState(offset);
+  const active = looping ? (((slide - offset) % count) + count) % count : slide;
   const [height, setHeight] = useState<number | undefined>(undefined);
   const lastTouch = useRef(0);
-  const count = items.length;
+  const touching = useRef(false);
 
   const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-  const goTo = useCallback((index: number) => {
+  /** Scroll to a slide position (copies included) */
+  const goToSlide = useCallback((index: number, instant = false) => {
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollTo({ left: index * el.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' });
+    el.scrollTo({ left: index * el.clientWidth, behavior: instant || reducedMotion() ? 'auto' : 'smooth' });
   }, []);
 
-  // Track which item is centered
+  // Start on the first real item (past the leading copy)
+  useLayoutEffect(() => {
+    const el = scrollerRef.current;
+    if (el && offset) el.scrollLeft = offset * el.clientWidth;
+  }, [offset]);
+
+  // Track which slide is centered; once scrolling stops on a copy, jump to the real item
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+    let settleTimer = 0;
+    const settle = () => {
+      if (touching.current) {
+        settleTimer = window.setTimeout(settle, SETTLE_MS);
+        return;
+      }
+      const w = el.clientWidth;
+      if (!looping || w <= 0) return;
+      const index = Math.round(el.scrollLeft / w);
+      if (index <= 0) el.scrollTo({ left: count * w, behavior: 'auto' });
+      else if (index >= count + 1) el.scrollTo({ left: w, behavior: 'auto' });
+    };
     const onScroll = () => {
       const w = el.clientWidth;
-      if (w > 0) setActive(Math.max(0, Math.min(count - 1, Math.round(el.scrollLeft / w))));
+      if (w > 0) setSlide(Math.max(0, Math.min(slideCount - 1, Math.round(el.scrollLeft / w))));
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(settle, SETTLE_MS);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, [count]);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.clearTimeout(settleTimer);
+    };
+  }, [count, slideCount, looping]);
 
   useEffect(() => {
     onActiveChange?.(active);
   }, [active, onActiveChange]);
 
-  // Keep the same item in view when the screen is rotated / resized
+  // Keep the same slide in view when the screen is rotated / resized
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -82,24 +124,24 @@ export function SnapCarousel<T>({
     const observer = new ResizeObserver(() => {
       if (el.clientWidth !== w) {
         w = el.clientWidth;
-        el.scrollTo({ left: active * w, behavior: 'auto' });
+        el.scrollTo({ left: slide * w, behavior: 'auto' });
       }
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [active]);
+  }, [slide]);
 
-  // Adaptive height: follow the active item's height (also when it expands / collapses)
+  // Adaptive height: follow the centered slide's height (also when it expands / collapses)
   useLayoutEffect(() => {
     if (!adaptiveHeight) return;
-    const slide = scrollerRef.current?.children[active] as HTMLElement | undefined;
-    if (!slide) return;
-    const measure = () => setHeight(slide.offsetHeight);
+    const el = scrollerRef.current?.children[slide] as HTMLElement | undefined;
+    if (!el) return;
+    const measure = () => setHeight(el.offsetHeight);
     measure();
     const observer = new ResizeObserver(measure);
-    observer.observe(slide);
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [active, adaptiveHeight]);
+  }, [slide, adaptiveHeight]);
 
   // Auto-advance while on screen and left alone
   useEffect(() => {
@@ -112,14 +154,15 @@ export function SnapCarousel<T>({
       if (!onScreen || document.hidden || el.contains(document.activeElement)) return;
       if (performance.now() - lastTouch.current < RESUME_AFTER_MS) return;
       const w = el.clientWidth;
-      const current = w > 0 ? Math.round(el.scrollLeft / w) : 0;
-      goTo(current + 1 >= count ? 0 : current + 1);
+      const current = w > 0 ? Math.round(el.scrollLeft / w) : offset;
+      if (looping) goToSlide(Math.min(current + 1, count + 1));
+      else goToSlide(current + 1 >= count ? 0 : current + 1);
     }, autoAdvanceMs);
     return () => {
       clearInterval(timer);
       observer.disconnect();
     };
-  }, [autoAdvanceMs, paused, count, goTo]);
+  }, [autoAdvanceMs, paused, count, looping, offset, goToSlide]);
 
   const touched = () => {
     lastTouch.current = performance.now();
@@ -127,8 +170,20 @@ export function SnapCarousel<T>({
 
   const step = (dir: 1 | -1) => {
     touched();
-    goTo(Math.max(0, Math.min(count - 1, active + dir)));
+    if (looping) goToSlide(Math.max(0, Math.min(count + 1, slide + dir)));
+    else goToSlide(Math.max(0, Math.min(count - 1, slide + dir)));
   };
+
+  // Slides: [copy of last, ...items, copy of first] when looping
+  const slides: { item: T; index: number; key: string }[] = items.map((item, i) => ({
+    item,
+    index: i,
+    key: getKey(item, i),
+  }));
+  if (looping) {
+    slides.unshift({ item: items[count - 1], index: count - 1, key: `loop-start-${getKey(items[count - 1], count - 1)}` });
+    slides.push({ item: items[0], index: 0, key: `loop-end-${getKey(items[0], 0)}` });
+  }
 
   return (
     <div
@@ -147,26 +202,46 @@ export function SnapCarousel<T>({
           adaptiveHeight ? 'items-start transition-[height] duration-300 ease-out' : ''
         }`}
         style={adaptiveHeight && height ? { height } : undefined}
-        onTouchStart={touched}
+        onTouchStart={() => {
+          touching.current = true;
+          touched();
+        }}
+        onTouchEnd={() => {
+          touching.current = false;
+          touched();
+        }}
+        onTouchCancel={() => {
+          touching.current = false;
+        }}
         onPointerDown={touched}
       >
-        {items.map((item, i) => (
-          <div
-            key={getKey(item, i)}
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${count}`}
-            inert={i !== active}
-            className="w-full shrink-0 snap-center snap-always px-4 min-w-0"
-          >
-            {renderItem(item, i, i === active)}
-          </div>
-        ))}
+        {slides.map(({ item, index, key }, s) => {
+          const isCopy = looping && (s === 0 || s === slideCount - 1);
+          return (
+            <div
+              key={key}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${index + 1} of ${count}`}
+              aria-hidden={isCopy || undefined}
+              inert={s !== slide}
+              className="w-full shrink-0 snap-center snap-always px-4 min-w-0"
+            >
+              {renderItem(item, index, s === slide)}
+            </div>
+          );
+        })}
       </div>
 
       {count > 1 && (
         <div className="mt-4 px-4 flex items-center justify-center gap-3">
-          <button type="button" onClick={() => step(-1)} disabled={active === 0} aria-label="Previous" className={NAV_BUTTON}>
+          <button
+            type="button"
+            onClick={() => step(-1)}
+            disabled={!looping && active === 0}
+            aria-label="Previous"
+            className={NAV_BUTTON}
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
@@ -178,7 +253,7 @@ export function SnapCarousel<T>({
                   type="button"
                   onClick={() => {
                     touched();
-                    goTo(i);
+                    goToSlide(i + offset);
                   }}
                   aria-label={`Go to ${i + 1} of ${count}`}
                   aria-current={i === active}
@@ -206,7 +281,13 @@ export function SnapCarousel<T>({
             </div>
           )}
 
-          <button type="button" onClick={() => step(1)} disabled={active === count - 1} aria-label="Next" className={NAV_BUTTON}>
+          <button
+            type="button"
+            onClick={() => step(1)}
+            disabled={!looping && active === count - 1}
+            aria-label="Next"
+            className={NAV_BUTTON}
+          >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>

@@ -86,7 +86,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({ item, onClose, onBookDem
 
           {/* On-screen Watermark */}
           <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-xs px-3 py-1 rounded-md text-[length:max(11px,calc(11rem/16))] font-semibold text-[#00A3FF] border border-slate-700">
-            TS Fitness Studio · Pune
+            TeamSamir Studio · Pune
           </div>
 
           {/* Bottom video controls scrubber */}
@@ -153,7 +153,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({ item, onClose, onBookDem
               <Sparkles className="w-3.5 h-3.5" />
               <span>TeamSamir Training Protocol</span>
             </span>
-            <span className="text-slate-400">TS Fitness, Kothrud Pune</span>
+            <span className="text-slate-400">TeamSamir, Kothrud Pune</span>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed">

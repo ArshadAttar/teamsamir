@@ -11,6 +11,14 @@ import { useIsPhone } from '../lib/useMediaQuery';
 const GLASS =
   'h-full rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-colors duration-300 hover:bg-white/[0.12] hover:border-white/30';
 
+/*
+ * Phone review card surface: an opaque blue gradient. The see-through glass picked up
+ * whatever was behind each card (some looked light grey, some blue), so on phones every
+ * card gets the same gradient.
+ */
+const PHONE_CARD =
+  'rounded-2xl bg-gradient-to-br from-[#1A4FB8] via-[#0F2E6E] to-[#0B1A3A] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.35)]';
+
 /** Turns **text** into bold; everything else is plain text */
 const renderBold = (text: string) =>
   text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
@@ -42,26 +50,40 @@ const Stars: React.FC<{ count: number }> = ({ count }) => (
   </div>
 );
 
-const ReviewAuthor: React.FC<{ review: ReviewItem }> = ({ review }) => (
+/** `large` (phones): photo, name and location about 10% bigger */
+const ReviewAuthor: React.FC<{ review: ReviewItem; large?: boolean }> = ({ review, large = false }) => (
   <div className="flex items-center gap-3 min-w-0">
     <img decoding="async"
       src={review.avatar}
       alt=""
       loading="lazy"
-      className="w-11 h-11 rounded-full object-cover border-2 border-white/30 shrink-0"
+      className={`${large ? 'w-12 h-12' : 'w-11 h-11'} rounded-full object-cover border-2 border-white/30 shrink-0`}
     />
     <div className="min-w-0">
-      <div className="text-sm font-bold text-white truncate">{review.name}</div>
-      <div className="mt-0.5 inline-flex max-w-full items-center gap-1 px-2 py-0.5 rounded-full bg-[#00A3FF]/15 border border-[#00A3FF]/30 text-[length:max(11px,calc(11rem/16))] font-semibold text-[#5CC8FF]">
-        <MapPin className="w-3 h-3 shrink-0" />
+      <div className={`${large ? 'text-[length:max(15px,calc(15.5rem/16))]' : 'text-sm'} font-bold text-white truncate`}>
+        {review.name}
+      </div>
+      <div
+        className={`mt-0.5 inline-flex max-w-full items-center gap-1 px-2 py-0.5 rounded-full bg-[#00A3FF]/15 border border-[#00A3FF]/30 font-semibold text-[#5CC8FF] ${
+          large ? 'text-[length:max(12.5px,calc(12.5rem/16))]' : 'text-[length:max(11px,calc(11rem/16))]'
+        }`}
+      >
+        <MapPin className={`${large ? 'w-3.5 h-3.5' : 'w-3 h-3'} shrink-0`} />
         <span className="truncate">{review.location}</span>
       </div>
     </div>
   </div>
 );
 
-const ResultBadge: React.FC<{ text: string }> = ({ text }) => (
-  <span className="self-start inline-flex items-start gap-1.5 text-[length:max(11px,calc(11rem/16))] font-semibold px-2.5 py-1 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/30">
+/** `solid` (phones): one solid green instead of the two-tone tinted badge */
+const ResultBadge: React.FC<{ text: string; solid?: boolean }> = ({ text, solid = false }) => (
+  <span
+    className={`self-start inline-flex items-start gap-1.5 text-[length:max(11px,calc(11rem/16))] font-semibold px-2.5 py-1 rounded-full border ${
+      solid
+        ? 'bg-[#16834A] text-white border-[#16834A]'
+        : 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30'
+    }`}
+  >
     <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" />
     <span className="line-clamp-2">{text}</span>
   </span>
@@ -135,7 +157,7 @@ const ReviewCard: React.FC<{
   const previewSize = expanded ? '' : single ? 'max-h-[13em]' : 'h-full';
 
   return (
-    <article ref={cardRef} className={`${GLASS} ${cardSize} p-5 sm:p-6 flex flex-col gap-4`}>
+    <article ref={cardRef} className={`${single ? PHONE_CARD : GLASS} ${cardSize} p-5 sm:p-6 flex flex-col gap-4`}>
       <div className="flex items-center justify-between shrink-0">
         <Stars count={review.stars} />
         <Quote className="w-6 h-6 text-[#00A3FF]/50" />
@@ -169,11 +191,11 @@ const ReviewCard: React.FC<{
       )}
 
       <div className="shrink-0">
-        <ResultBadge text={review.resultBadge} />
+        <ResultBadge text={review.resultBadge} solid={single} />
       </div>
 
       <div className={`shrink-0 pt-4 border-t border-white/10 ${!single ? 'mt-auto' : ''}`}>
-        <ReviewAuthor review={review} />
+        <ReviewAuthor review={review} large={single} />
       </div>
     </article>
   );
@@ -279,8 +301,8 @@ const VideoCard: React.FC<{ video: VideoFeedbackItem; isCopy: boolean }> = ({ vi
 export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: string }> = ({ videos, label }) => {
   const isPhone = useIsPhone();
 
-  // Phones: one video at a time, centered. Its width is capped so the whole 9:16 card
-  // (and the buttons under it) fits on the screen without cropping the video.
+  // Phones: one video at a time, centered, looping round. Its width is capped so the whole
+  // 9:16 card (and the buttons under it) fits on the screen without cropping the video.
   if (isPhone) {
     return (
       <SnapCarousel
@@ -288,8 +310,9 @@ export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: 
         className="pt-8 pb-6"
         items={videos}
         getKey={(v) => v.id}
+        loop
         renderItem={(v) => (
-          <div className="mx-auto w-[min(100%,calc(64svh*9/16))]">
+          <div className="mx-auto w-[min(100%,calc(70svh*9/16))]">
             <VideoCard video={v} isCopy={false} />
           </div>
         )}
@@ -325,6 +348,7 @@ const ReviewsStrip: React.FC = () => {
         items={REVIEWS}
         getKey={(r) => r.id}
         adaptiveHeight
+        loop
         autoAdvanceMs={7000}
         paused={expandedCount > 0}
         renderItem={(r) => <ReviewCard review={r} layout="single" onExpandedChange={onExpandedChange} />}
@@ -355,18 +379,26 @@ const GlassBackdrop: React.FC = () => (
   </div>
 );
 
-const SectionHeader: React.FC<{ kicker: string; title: string; desc: string; icon?: React.ReactNode }> = ({
-  kicker,
-  title,
-  desc,
-  icon,
-}) => (
+const SectionHeader: React.FC<{
+  kicker: string;
+  title: string;
+  desc: string;
+  icon?: React.ReactNode;
+  /** Keep the title on one line on phones (font scales with the screen width) */
+  oneLineOnPhone?: boolean;
+}> = ({ kicker, title, desc, icon, oneLineOnPhone = false }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-8 sm:mb-10 space-y-2">
     <div className="inline-flex items-center gap-1.5 text-[length:max(11px,calc(11rem/16))] sm:text-xs font-bold text-[#00A3FF] uppercase tracking-wider">
       {icon}
       {kicker}
     </div>
-    <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-white tracking-tight">{title}</h2>
+    <h2
+      className={`font-display font-extrabold text-white tracking-tight sm:text-4xl ${
+        oneLineOnPhone ? 'max-sm:whitespace-nowrap max-sm:text-[3.7vw] max-sm:tracking-[-0.02em]' : 'text-2xl'
+      }`}
+    >
+      {title}
+    </h2>
     <p className="text-xs sm:text-base text-slate-300 max-w-2xl mx-auto">{desc}</p>
   </div>
 );
@@ -401,6 +433,7 @@ export const ClientFeedback: React.FC = () => (
           title="Listen to Our Clients Share Their Experiences."
           desc="Don't Just Take Our Word for It. Hear It from Our Clients."
           icon={<Video className="w-3.5 h-3.5" />}
+          oneLineOnPhone
         />
         {/* Full-width strip (edge to edge). Pulled up a little to close the gap under the heading */}
         <div className="w-full -mt-4 sm:-mt-6">

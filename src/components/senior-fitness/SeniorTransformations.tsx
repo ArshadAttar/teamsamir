@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
 import { img } from '../../data/seniorFitnessMedia';
 
 // Real senior client sessions (recorded live online coaching). Clips: senior-NN.mp4 (720x480, ~18 s);
@@ -94,6 +94,86 @@ const FadeUp: React.FC<{ children: React.ReactNode; delay?: number; className?: 
 
 type ViewerState = { kind: 'photo' | 'video'; index: number } | null;
 
+/** Round sound / play buttons shared by the featured player and the full-screen viewer */
+const VIDEO_CONTROL_BUTTON =
+  'w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-black/55 backdrop-blur-md text-white border border-white/25 hover:bg-[#1769FF] hover:border-[#1769FF] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
+
+/**
+ * Full-screen viewer video: plays muted on loop with sound on / off and play / pause
+ * buttons on the video (tapping the video also plays / pauses). The sound choice is kept
+ * while moving to the next or previous clip.
+ */
+let viewerMuted = true;
+const ViewerVideo: React.FC<{ src: string; poster: string }> = ({ src, poster }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(viewerMuted);
+
+  const togglePlay = () => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.paused) el.play().catch(() => undefined);
+    else el.pause();
+  };
+
+  const toggleMute = () => {
+    const el = ref.current;
+    const next = !isMuted;
+    viewerMuted = next;
+    setIsMuted(next);
+    if (!el) return;
+    el.muted = next;
+    if (!next && el.paused) el.play().catch(() => undefined);
+  };
+
+  return (
+    <div className="relative max-w-full">
+      <video
+        ref={ref}
+        src={src}
+        poster={poster}
+        autoPlay
+        muted={isMuted}
+        loop
+        playsInline
+        onPlay={(e) => {
+          e.currentTarget.muted = viewerMuted;
+          setIsPlaying(true);
+        }}
+        onPause={() => setIsPlaying(false)}
+        onClick={togglePlay}
+        className="block max-h-[70vh] max-w-full rounded-2xl cursor-pointer"
+      />
+      <div className="absolute right-3 bottom-3 sm:right-4 sm:bottom-4 flex gap-2">
+        <button
+          type="button"
+          onClick={toggleMute}
+          onPointerDown={(e) => e.stopPropagation()}
+          aria-label={isMuted ? 'Turn sound on' : 'Turn sound off'}
+          title={isMuted ? 'Sound on' : 'Sound off'}
+          className={VIDEO_CONTROL_BUTTON}
+        >
+          {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+        </button>
+        <button
+          type="button"
+          onClick={togglePlay}
+          onPointerDown={(e) => e.stopPropagation()}
+          aria-label={isPlaying ? 'Pause video' : 'Play video'}
+          title={isPlaying ? 'Pause' : 'Play'}
+          className={VIDEO_CONTROL_BUTTON}
+        >
+          {isPlaying ? (
+            <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+          ) : (
+            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const MediaViewer: React.FC<{ state: ViewerState; onClose: () => void; onChange: (index: number) => void }> = ({
   state,
   onClose,
@@ -172,17 +252,7 @@ const MediaViewer: React.FC<{ state: ViewerState; onClose: () => void; onChange:
             }}
           >
             {video?.videoSrc ? (
-              <video
-                key={video.videoSrc}
-                src={video.videoSrc}
-                poster={video.src}
-                controls
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="max-h-[70vh] max-w-full rounded-2xl"
-              />
+              <ViewerVideo key={video.videoSrc} src={video.videoSrc} poster={video.src} />
             ) : (
               <motion.img loading="lazy" decoding="async"
                 key={`${state.kind}-${state.index}`}
@@ -304,6 +374,29 @@ export const SeniorTransformations: React.FC = () => {
 
   const featured = VIDEOS[activeVideo];
 
+  // Featured player: play / pause and sound on / off buttons (the sound choice carries over to the next clip)
+  const featuredRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const mutedRef = useRef(true);
+  mutedRef.current = isMuted;
+
+  const toggleFeaturedPlay = () => {
+    const el = featuredRef.current;
+    if (!el) return;
+    if (el.paused) el.play().catch(() => undefined);
+    else el.pause();
+  };
+
+  const toggleFeaturedMute = () => {
+    const el = featuredRef.current;
+    const next = !isMuted;
+    setIsMuted(next);
+    if (!el) return;
+    el.muted = next;
+    if (!next && el.paused) el.play().catch(() => undefined);
+  };
+
   return (
     <section className="relative py-8 sm:py-12 lg:py-14 text-[#F2F5FB] overflow-hidden bg-[#0A1020]">
       <div
@@ -336,15 +429,18 @@ export const SeniorTransformations: React.FC = () => {
 
         <FadeUp delay={0.05} className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5 lg:gap-6 items-start">
           <div>
-          <button
-            onClick={() => setViewer({ kind: 'video', index: activeVideo })}
-            aria-label={`Play video: ${featured.title}`}
-            className="group relative block w-full aspect-video rounded-[22px] overflow-hidden bg-black text-left text-white cursor-pointer focus-visible:outline-2 focus-visible:outline-[#6EA2FF] focus-visible:outline-offset-4"
-          >
+          <div className="group relative block w-full aspect-video rounded-[22px] overflow-hidden bg-black text-left text-white">
             <AnimatePresence mode="wait">
               {/* Featured clip autoplays muted on loop (falls back to the poster image) */}
               <motion.video
                 key={activeVideo}
+                ref={featuredRef}
+                onPlay={(e) => {
+                  // A newly picked clip follows the current sound setting
+                  e.currentTarget.muted = mutedRef.current;
+                  setIsPlaying(true);
+                }}
+                onPause={() => setIsPlaying(false)}
                 src={featured.videoSrc}
                 poster={featured.src}
                 autoPlay
@@ -361,10 +457,42 @@ export const SeniorTransformations: React.FC = () => {
                 className="absolute inset-0 w-full h-full object-contain"
               />
             </AnimatePresence>
-            <span className="absolute right-4 top-4 bg-black/55 rounded-lg px-2.5 py-0.5 text-xs sm:text-sm font-semibold tabular-nums">
+            {/* Tapping the video opens it full screen */}
+            <button
+              type="button"
+              onClick={() => setViewer({ kind: 'video', index: activeVideo })}
+              aria-label={`Open video full screen: ${featured.title}`}
+              className="absolute inset-0 w-full h-full cursor-pointer rounded-[22px] focus-visible:outline-2 focus-visible:outline-[#6EA2FF] focus-visible:-outline-offset-4"
+            />
+            <span className="pointer-events-none absolute right-4 top-4 bg-black/55 rounded-lg px-2.5 py-0.5 text-xs sm:text-sm font-semibold tabular-nums">
               {featured.duration}
             </span>
-          </button>
+            {/* Sound and play / pause (always visible, on phones and larger screens) */}
+            <div className="absolute right-3 bottom-3 sm:right-4 sm:bottom-4 flex gap-2">
+              <button
+                type="button"
+                onClick={toggleFeaturedMute}
+                aria-label={isMuted ? 'Turn sound on' : 'Turn sound off'}
+                title={isMuted ? 'Sound on' : 'Sound off'}
+                className={VIDEO_CONTROL_BUTTON}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleFeaturedPlay}
+                aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                title={isPlaying ? 'Pause' : 'Play'}
+                className={VIDEO_CONTROL_BUTTON}
+              >
+                {isPlaying ? (
+                  <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                ) : (
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                )}
+              </button>
+            </div>
+          </div>
           {/* Title and description sit below the video, not on top of it */}
           <div className="mt-4 px-1">
             <h4 className="font-display font-semibold text-lg sm:text-2xl">{featured.title}</h4>
@@ -372,8 +500,9 @@ export const SeniorTransformations: React.FC = () => {
           </div>
           </div>
 
-          {/* Playlist: 5 clips visible, the rest scroll inside this box only */}
-          <div className="grid gap-2.5 max-h-[440px] sm:max-h-[490px] overflow-y-auto overscroll-contain pr-1.5 [scrollbar-width:thin] [scrollbar-color:#2A3A5E_transparent]">
+          {/* Playlist: 5 clips visible, the rest scroll inside this box. At either end of the
+              list, scrolling carries on to the page (no overscroll-contain). */}
+          <div className="grid gap-2.5 max-h-[440px] sm:max-h-[490px] overflow-y-auto overscroll-auto pr-1.5 [scrollbar-width:thin] [scrollbar-color:#2A3A5E_transparent]">
             {VIDEOS.map((v, i) => (
               <button
                 key={v.title}

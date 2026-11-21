@@ -45,7 +45,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   // Clean unnumbered items
   const navItems: { id: PageId; label: string; desc: string }[] = [
-    { id: 'home', label: 'Home', desc: 'TS Fitness studio overview & coach bio' },
+    { id: 'home', label: 'Home', desc: 'TeamSamir studio overview & coach bio' },
     { id: 'services', label: 'Services', desc: '1-on-1 personal training & nutrition' },
     { id: 'senior-fitness', label: 'Senior Fitness', desc: 'Safe, personal training for ages 55+' },
     { id: 'transformations', label: 'Transformations', desc: 'Real client results, reviews & video reels' },

@@ -31,7 +31,7 @@ export const BentoBuild: React.FC<BentoBuildProps> = ({ onBookDemo, className = 
             <span>Interactive Bento Architecture</span>
           </div>
           <h2 className="text-xl sm:text-3xl font-display font-bold text-[#171A21] tracking-tight mt-2">
-            The TS Fitness Transformation System
+            The TeamSamir Transformation System
           </h2>
           <p className="text-xs sm:text-base text-[#646B78] max-w-2xl mt-1">
             Engineered modular tiles that snap into place — no boring bullet lists, only battle-tested training protocols.
@@ -211,7 +211,7 @@ export const BentoBuild: React.FC<BentoBuildProps> = ({ onBookDemo, className = 
               Exclusive Private Slots & Camera-Ready Recomp
             </h4>
             <p className="text-xs text-slate-600 max-w-lg">
-              Discreet 1-on-1 time slots at TS Fitness studio on DP Road for actors, athletes, and executives requiring absolute focus.
+              Discreet 1-on-1 time slots at TeamSamir studio on DP Road for actors, athletes, and executives requiring absolute focus.
             </p>
           </div>
 

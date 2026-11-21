@@ -589,7 +589,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               }`}
             >
               <InfoItem icon={<Sparkles className="w-4 h-4" />} label="Head Trainer & Founder" accent>
-                <div className="text-sm font-bold text-[#171A21]">TeamSamir (TS Fitness)</div>
+                <div className="text-sm font-bold text-[#171A21]">TeamSamir</div>
                 <div className="text-xs text-[#646B78]">{BUSINESS_INFO.experienceYears}+ Years Experience · Former Coach at Fitness Talk</div>
               </InfoItem>
 
@@ -607,7 +607,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               <InfoItem icon={<MessageSquare className="w-4 h-4" />} label="WhatsApp Business" green>
                 <a
                   href={`https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-                    'Hi Samir, I want to book a free demo session at TS Fitness in Pune.'
+                    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

@@ -91,7 +91,40 @@ export const HomePage: React.FC<HomePageProps> = ({
                 Your fitness. Your goals. <span className="text-[#00A3FF] font-semibold">Our expertise.</span>
               </p>
 
-              {/* Credibility Line (Client-supplied claims with verification notice) */}
+              {/* Phones and tablets: the 3 stats as cards in one row (left) and the logo (right, ~25% of the width) */}
+              <div className="lg:hidden flex items-center gap-3 sm:gap-5">
+                <div className="flex-1 min-w-0 grid grid-cols-3 gap-1.5 sm:gap-3">
+                  {[
+                    { value: `${BUSINESS_INFO.experienceYears}+`, label: 'Years Experience' },
+                    { value: BUSINESS_INFO.clientsTrained, label: 'Clients' },
+                    { value: BUSINESS_INFO.celebritiesTrained, label: 'Celebrities' },
+                  ].map((stat) => (
+                    <div
+                      key={stat.label}
+                      className={`rounded-xl border px-1.5 py-2.5 sm:py-4 text-center transition-all ${
+                        highlightPlaceholders
+                          ? 'bg-amber-950/40 border-amber-500/80'
+                          : 'bg-[#1C2028]/80 border-slate-800'
+                      }`}
+                    >
+                      <div className="text-lg sm:text-3xl font-display font-extrabold text-[#00A3FF] leading-none">{stat.value}</div>
+                      <div className="mt-1 text-[length:max(11px,calc(11rem/16))] sm:text-sm font-semibold text-white leading-tight">
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <img
+                  decoding="async"
+                  src="/media/shared/logo/logo-without-bg.webp"
+                  alt="TeamSamir logo"
+                  className="w-1/4 aspect-square object-contain shrink-0"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              {/* Credibility Line (Client-supplied claims with verification notice).
+                  Below lg the stats are in the cards above, so only the sentence shows here. */}
               <div
                 className={`p-2.5 sm:p-3.5 rounded-xl border transition-all ${
                   highlightPlaceholders
@@ -99,7 +132,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     : 'bg-[#1C2028]/80 border-slate-800'
                 }`}
               >
-                <div className="flex items-start sm:items-center justify-between gap-2">
+                <div className="hidden lg:flex items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm font-medium text-slate-200">
                     <span className="text-white font-semibold">{BUSINESS_INFO.experienceYears}+ Years Experience</span>
                     <span className="text-slate-500 max-[379px]:hidden" aria-hidden="true">|</span>
@@ -109,7 +142,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
                   <Award className="w-4 h-4 text-[#00A3FF] shrink-0 mt-0.5 sm:mt-0" />
                 </div>
-                <p className="text-[length:max(11px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-slate-400 mt-1">
+                <p className="text-[length:max(11px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-slate-400 lg:mt-1">
                   {BUSINESS_INFO.experienceYears}+ years of hands-on coaching in Pune, guiding {BUSINESS_INFO.clientsTrained} clients and {BUSINESS_INFO.celebritiesTrained} celebrities with K11-certified methods.
                 </p>
               </div>
@@ -134,19 +167,19 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Right Column: 3D-styled Photographic Presentation (Real Samir in TS Fitness) */}
-            <div className="lg:col-span-5 relative flex justify-center">
+            {/* Right Column: logo presentation (desktop only; phones and tablets show the logo beside the stat cards) */}
+            <div className="hidden lg:flex lg:col-span-5 relative justify-center">
               
               {/* 3D Visual Depth Canvas Frame */}
               <div className="relative w-full max-w-md">
                 
-                {/* Main Card with Trainer Portrait in TS Fitnes Gym */}
+                {/* Main card with the logo mark */}
                 <div className="group relative transition-transform duration-500 hover:rotate-0 hover:scale-[1.01]">
                   <div className="aspect-16/10 sm:aspect-4/3 lg:aspect-4/3 relative flex items-center justify-center px-3">
                     {/* Transparent logo mark */}
                     <img decoding="async"
                       src="/media/shared/logo/logo-without-bg.webp"
-                      alt="TeamSamir logo - TS Fitness Pune"
+                      alt="TeamSamir logo - TeamSamir Pune"
                       className="w-3/5 h-3/4 object-contain object-center shrink-0 transition-transform duration-500 ease-out group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
@@ -322,9 +355,9 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* ============================================================
-          H. FREE DEMO CTA SECTION (Strong Blue Callout Panel)
+          H. FREE DEMO CTA SECTION (Strong Blue Callout Panel). Hidden on phones.
           ============================================================ */}
-      <section className="py-8 sm:py-12 lg:py-14 bg-[#1769FF] text-white">
+      <section className="hidden sm:block py-8 sm:py-12 lg:py-14 bg-[#1769FF] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4 sm:space-y-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold">
             <Calendar className="w-3.5 h-3.5" />

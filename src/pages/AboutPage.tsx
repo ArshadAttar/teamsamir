@@ -96,7 +96,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                       if (v.paused) v.play().catch(() => undefined);
                     }
                   }}
-                  aria-label="TeamSamir - Founder & Head Coach at TS Fitness"
+                  aria-label="Samir - Founder & Head Coach at TeamSamir"
                   className="w-full h-full object-cover object-[center_25%]"
                 />
 

@@ -114,14 +114,14 @@ const SectionHeading: React.FC<{ kicker: string; title: string; desc?: string; d
       {kicker}
     </div>
     <h2
-      className={`text-xl sm:text-3xl lg:text-4xl font-display font-bold tracking-tight ${
+      className={`text-2xl sm:text-3xl lg:text-4xl font-display font-bold tracking-tight ${
         dark ? 'text-white' : 'text-[#171A21]'
       }`}
     >
       {title}
     </h2>
     {desc && (
-      <p className={`text-xs sm:text-base leading-relaxed ${dark ? 'text-slate-300' : 'text-[#646B78]'}`}>{desc}</p>
+      <p className={`text-sm sm:text-base leading-relaxed ${dark ? 'text-slate-300' : 'text-[#646B78]'}`}>{desc}</p>
     )}
   </Reveal>
 );
@@ -272,11 +272,14 @@ Personal, one-on-one fitness training for senior citizens. we help older adults 
               {WHY_IT_MATTERS.map(({ icon: Icon, title, desc }, idx) => (
                 <Reveal key={title} delay={(idx % 3) * 0.08}>
                   <div className="group h-full p-5 sm:p-6 rounded-2xl border border-[#E1E6EF] bg-white hover:border-[#1769FF]/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-xl bg-[#EEF5FF] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#1769FF]">
-                      <Icon className="w-6 h-6 text-[#1769FF] transition-colors duration-300 group-hover:text-white" />
+                    {/* Icon and heading on one line */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 shrink-0 rounded-xl bg-[#EEF5FF] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#1769FF]">
+                        <Icon className="w-6 h-6 text-[#1769FF] transition-colors duration-300 group-hover:text-white" />
+                      </div>
+                      <h3 className="min-w-0 text-base sm:text-lg font-display font-bold leading-snug text-[#171A21]">{title}</h3>
                     </div>
-                    <h3 className="mt-4 text-base sm:text-lg font-display font-bold text-[#171A21]">{title}</h3>
-                    <p className="mt-1.5 text-xs sm:text-sm text-[#646B78] leading-relaxed">{desc}</p>
+                    <p className="mt-3 text-sm text-[#646B78] leading-relaxed">{desc}</p>
                   </div>
                 </Reveal>
               ))}
@@ -341,9 +344,9 @@ Personal, one-on-one fitness training for senior citizens. we help older adults 
         </section>
 
         {/* ============================================================
-            5. FINAL CTA (background image)
+            5. FINAL CTA (background image). Hidden on phones.
             ============================================================ */}
-        <section className="relative py-10 sm:py-14 lg:py-16 text-white">
+        <section className="hidden sm:block relative py-10 sm:py-14 lg:py-16 text-white">
           <SeniorImage
             src={img('cta')}
             alt="Senior women exercising together in a group class"

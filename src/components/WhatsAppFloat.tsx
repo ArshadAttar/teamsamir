@@ -7,7 +7,7 @@ import { BUSINESS_INFO } from '../data/mockData';
  */
 export const WhatsAppFloat: React.FC = () => {
   const href = `https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-    'Hi Samir, I want to book a free demo session at TS Fitness in Pune.'
+    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
   )}`;
 
   return (

@@ -10,7 +10,34 @@ interface FooterProps {
   onBookDemo: () => void;
 }
 
+const PAGE_LINKS: { id: PageId; label: string }[] = [
+  { id: 'home', label: 'Home' },
+  { id: 'services', label: 'Services' },
+  { id: 'senior-fitness', label: 'Senior Fitness' },
+  { id: 'transformations', label: 'Transformations' },
+  { id: 'about', label: 'About Samir' },
+];
+
+const SERVICE_LINKS = ['1-on-1 Personal Training', 'Health Management', 'Nutrition Guidance', 'Offline Training ( Pune )'];
+
+/** Phones: tight rows; tablets keep 32px tap rows; desktop as before */
+const LIST = 'space-y-1 sm:space-y-0.5 lg:space-y-2 text-xs sm:text-sm text-slate-400';
+const LINK =
+  'inline-flex items-center py-0.5 sm:py-0 sm:min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left';
+
+/** Short form of the opening hours for the one-line phone layout ("Mon–Sat: 6 AM–10 PM") */
+const shortHours = (hours: string) =>
+  hours
+    .replace(/,?\s*IST\s*$/i, '')
+    .replace(/:00/g, '')
+    .replace(/\s*–\s*/g, '–')
+    .trim();
+
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
+  const whatsappHref = `https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
+    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
+  )}`;
+
   return (
     <footer className="bg-[#111318] text-white border-t border-[#1C2028]">
       {/* Top Banner / Pre-footer callout */}
@@ -35,9 +62,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
       </div>
 
       {/* Main Footer Columns */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 lg:py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-12 lg:py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-8 lg:gap-10">
         {/* Brand & About Column (4 cols) */}
-        <div className="lg:col-span-4 space-y-3 sm:space-y-4">
+        <div className="lg:col-span-4 space-y-2.5 sm:space-y-4">
           <TeamSamirLogo variant="dark" size="sm" />
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm">
             High-standard personal fitness training, athletic coaching, and sustainable nutrition guidance led by Coach Samir.
@@ -47,118 +74,95 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
         {/* Quick Links & Services: 2-column grid on mobile, individual cols on desktop */}
         <div className="grid grid-cols-2 gap-4 col-span-1 md:contents lg:contents">
           {/* Quick Links */}
-          <div className="lg:col-span-2 space-y-2 sm:space-y-3">
+          <div className="lg:col-span-2 space-y-1.5 sm:space-y-3">
             <h4 className="text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">Pages</h4>
-            <ul className="space-y-0.5 lg:space-y-2 text-xs sm:text-sm text-slate-400">
-              <li>
-                <a {...pageLink('home', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('services', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Services
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('senior-fitness', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Senior Fitness
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('transformations', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Transformations
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('about', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  About Samir
-                </a>
-              </li>
+            <ul className={LIST}>
+              {PAGE_LINKS.map((link) => (
+                <li key={link.id}>
+                  <a {...pageLink(link.id, onNavigate)} className={LINK}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Training Formats */}
-          <div className="lg:col-span-2 space-y-2 sm:space-y-3">
+          <div className="lg:col-span-2 space-y-1.5 sm:space-y-3">
             <h4 className="text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">Services</h4>
-            <ul className="space-y-0.5 lg:space-y-2 text-xs sm:text-sm text-slate-400">
-              <li>
-                <a {...pageLink('services', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  1-on-1 Personal Training
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('services', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Health Management
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('services', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Nutrition Guidance
-                </a>
-              </li>
-              <li>
-                <a {...pageLink('services', onNavigate)} className="inline-flex items-center min-h-[32px] lg:min-h-0 hover:text-white transition-colors cursor-pointer text-left">
-                  Offline Training ( Pune )
-                </a>
-              </li>
+            <ul className={LIST}>
+              {SERVICE_LINKS.map((label) => (
+                <li key={label}>
+                  <a {...pageLink('services', onNavigate)} className={LINK}>
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Direct Contact Information (4 cols) */}
-        <div className="lg:col-span-4 space-y-2.5 sm:space-y-3">
+        {/* Direct Contact Information (4 cols). Phones: address, then both numbers on one line, then email and hours on one line */}
+        <div className="lg:col-span-4 space-y-2 sm:space-y-3">
           <h4 className="text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">Location & Contact</h4>
           <div className="space-y-2 sm:space-y-2.5 text-xs sm:text-sm text-slate-400">
             <div className="flex items-start gap-2 sm:gap-2.5">
               <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-white font-medium text-xs sm:text-sm">{BUSINESS_INFO.location.fullAddress}</p>
-                <p className="text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-400 mt-0.5">Pune, Maharashtra 411038</p>
+              <p className="text-white font-medium text-xs sm:text-sm">
+                {BUSINESS_INFO.location.fullAddress}
+                <span className="sm:hidden text-slate-400 font-normal">, Maharashtra 411038</span>
+                <span className="hidden sm:block text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-400 font-normal mt-0.5">
+                  Pune, Maharashtra 411038
+                </span>
+              </p>
+            </div>
+
+            {/* Phone + WhatsApp */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-col sm:items-start sm:gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
+                <a
+                  href={`tel:${BUSINESS_INFO.contact.phoneRaw}`}
+                  className="sm:py-1 lg:py-0 text-white hover:text-[#00A3FF] font-medium transition-colors whitespace-nowrap"
+                >
+                  {BUSINESS_INFO.contact.phone}
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#16834A] shrink-0" />
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sm:py-1 lg:py-0 text-white hover:text-[#16834A] font-medium transition-colors whitespace-nowrap"
+                >
+                  {BUSINESS_INFO.contact.whatsapp}
+                  <span className="hidden sm:inline"> - WhatsApp</span>
+                  <span className="sm:hidden sr-only"> (WhatsApp)</span>
+                </a>
               </div>
             </div>
-            
-            {/* Direct Clickable Phone */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
-              <a
-                href={`tel:${BUSINESS_INFO.contact.phoneRaw}`}
-                className="py-1 lg:py-0 text-white hover:text-[#00A3FF] font-medium transition-colors"
-              >
-                {BUSINESS_INFO.contact.phone}
-              </a>
-            </div>
 
-            {/* Direct Clickable WhatsApp */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#16834A] shrink-0" />
-              <a
-                href={`https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-                  'Hi Samir, I want to book a free demo session at TS Fitness in Pune.'
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1 lg:py-0 text-white hover:text-[#16834A] font-medium transition-colors"
-              >
-                {BUSINESS_INFO.contact.whatsapp} (WhatsApp Direct)
-              </a>
-            </div>
+            {/* Email + working hours */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-col sm:items-start sm:gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
+                <a
+                  href={`mailto:${BUSINESS_INFO.contact.email}`}
+                  className="sm:py-1 lg:py-0 break-all text-slate-300 hover:text-white transition-colors"
+                >
+                  {BUSINESS_INFO.contact.email}
+                </a>
+              </div>
 
-            {/* Direct Clickable Email */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
-              <a
-                href={`mailto:${BUSINESS_INFO.contact.email}`}
-                className="py-1 lg:py-0 break-all text-slate-300 hover:text-white transition-colors"
-              >
-                {BUSINESS_INFO.contact.email}
-              </a>
-            </div>
-
-            {/* Working Hours */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
-              <span className="text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-300">{BUSINESS_INFO.contact.workingHours}</span>
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0" />
+                <span className="text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-300 whitespace-nowrap sm:whitespace-normal">
+                  <span className="sm:hidden">{shortHours(BUSINESS_INFO.contact.workingHours)}</span>
+                  <span className="hidden sm:inline">{BUSINESS_INFO.contact.workingHours}</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -171,8 +175,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
           <span>© {new Date().getFullYear()} TeamSamir. All rights reserved.</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-slate-400">
-          <span>Kothrud, Pune</span>
-          <span>·</span>
           <span>Certified Personal Training & Coaching</span>
         </div>
       </div>
