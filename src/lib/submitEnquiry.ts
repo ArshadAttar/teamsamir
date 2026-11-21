@@ -8,7 +8,8 @@ import type { EnquiryRequest } from './enquiryRules';
 
 export type EnquiryPayload = EnquiryRequest;
 
-const ENDPOINT = '/api/enquiry';
+// Trailing slash: vercel.json has trailingSlash: true (no redirect round trip)
+const ENDPOINT = '/api/enquiry/';
 const TIMEOUT_MS = 30000;
 
 /** Error with the server's reason code (e.g. RATE_LIMIT, CAPTCHA) */
