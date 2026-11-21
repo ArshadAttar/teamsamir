@@ -22,7 +22,7 @@
  *   TURNSTILE_DISABLED    "true" skips Turnstile (ignored in production; for local tests)
  */
 
-import { RATE_LIMIT_MESSAGE, validateEnquiry } from '../src/lib/enquiryRules';
+import { RATE_LIMIT_MESSAGE, validateEnquiry } from '../src/lib/enquiryRules.js';
 
 declare const process: { env: Record<string, string | undefined> };
 
