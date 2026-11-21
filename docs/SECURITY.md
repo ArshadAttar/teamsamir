@@ -201,7 +201,7 @@ Vercel already provides HTTPS and DDoS mitigation for the current domain.
 - **Apps Script URL:** it's public by Google's design (the web app must allow "Anyone"). Protection is the shared secret: keep it secret, and rotate it in both places if it ever leaks.
 - **Inline styles:** the CSP allows them (React and the animations need them). Inline *scripts* are not allowed.
 - **Public contact details:** the phone number, email and Instagram are public on purpose, and scrapers can read them. Use Gmail's spam filter for the address.
-- **Live result (22 Nov 2026):** deployed and checked. GET → 405, another site → 403, missing or fake CAPTCHA → 403, HTML in the name → 400, 20 KB → 413, malformed JSON → 400, direct post to Apps Script without the secret → FORBIDDEN, Apps Script URL absent from the public JS, all pages 200, 0 CSP violations. An automated browser (headless and visible) was stopped by Turnstile. The first deploy crashed (an ESM import without a `.js` extension); it was fixed in `c937e97`. Remaining: one real enquiry submitted by a person.
+- **Live result (22 Nov 2026):** deployed and checked. GET → 405, another site → 403, missing or fake CAPTCHA → 403, HTML in the name → 400, 20 KB → 413, malformed JSON → 400, direct post to Apps Script without the secret → FORBIDDEN, Apps Script URL absent from the public JS, all pages 200, 0 CSP violations. An automated browser (headless and visible) was stopped by Turnstile. The first deploy crashed (an ESM import without a `.js` extension); it was fixed in `c937e97`. A real enquiry submitted by a person arrived in the sheet and by email.
 
 ## 11. Deployment checklist
 
@@ -211,6 +211,6 @@ Vercel already provides HTTPS and DDoS mitigation for the current domain.
 - [x] Turnstile widget created; site key + secret key in Vercel
 - [x] `APPS_SCRIPT_URL` in Vercel; `VITE_FORM_ENDPOINT` deleted
 - [x] Push / redeploy
-- [ ] One real enquiry submitted by a person: row in the sheet, email received
+- [x] One real enquiry submitted by a person: row in the sheet, email received (22 Nov 2026)
 - [x] Response headers checked on the live site
 - [ ] (Optional) Vercel Authentication on Preview deployments
