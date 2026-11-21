@@ -594,8 +594,8 @@ export const TransformationsPage: React.FC<TransformationsPageProps> = () => {
               subtitle="Hear our clients talk about their training, their progress and the results they achieved."
             />
           </div>
-          {/* Pulled up a little: the card slots add space above for the hover zoom */}
-          <div className="w-full -mt-4 sm:-mt-6">
+          {/* Room above the strip for the hovered card, which grows 20% (10% upwards): its height is about 59vw on tablets and 35.5vw on laptops, the slot already has 3rem */}
+          <div className="w-full mt-5 sm:mt-[max(0px,calc(6vw-2.5rem))] lg:mt-[max(0px,calc(3.6vw-2.5rem))]">
             <FeedbackVideoStrip videos={TRANSFORMATION_VIDEOS} label="Client transformation videos" />
           </div>
         </div>

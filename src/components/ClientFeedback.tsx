@@ -480,8 +480,8 @@ export const ClientFeedback: React.FC = () => (
           icon={<Video className="w-3.5 h-3.5" />}
           oneLineOnPhone
         />
-        {/* Full-width strip (edge to edge). Pulled up a little to close the gap under the heading */}
-        <div className="w-full -mt-4 sm:-mt-6">
+        {/* Full-width strip (edge to edge). Phones: pulled up a little to close the gap under the heading; larger screens keep room for the hover zoom */}
+        <div className="w-full -mt-4 sm:mt-0">
           {/*
             5 cards per screen on desktop, 3 on tablet, 1 at a time on phones. The hovered card zooms
             to 120%, so it grows 10% of its width on each side: the side padding (px) is set a

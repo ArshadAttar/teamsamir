@@ -4,6 +4,8 @@ import { BookingIntent, EnquiryFormData, EnquiryFormErrors } from '../types';
 import { BUSINESS_INFO, SERVICES } from '../data/mockData';
 import { EnquiryPlanPanel, planLabel, planValue, TRIAL_VALUE } from '../components/EnquiryPlanPanel';
 import { GreenConfetti } from '../components/GreenConfetti';
+import { FormSelect, SelectGroup } from '../components/FormSelect';
+import { WhatsAppIcon } from '../components/WhatsAppFloat';
 import {
   MapPin,
   Phone,
@@ -38,6 +40,29 @@ const GOALS = [
   'Flexibility & Posture',
   'Senior Fitness / Mobility',
   'Other',
+];
+
+/** Options for the custom "Your Goal" drop-down */
+const GOAL_GROUPS: SelectGroup[] = [
+  { options: [{ value: '', label: 'Select your goal' }, ...GOALS.map((g) => ({ value: g, label: g }))] },
+];
+
+/** Options for the custom "Plan" drop-down: plan names grouped under their service */
+const PLAN_GROUPS: SelectGroup[] = [
+  {
+    options: [
+      { value: '', label: planLabel('') },
+      { value: TRIAL_VALUE, label: planLabel(TRIAL_VALUE) },
+    ],
+  },
+  ...SERVICES.map((s) => ({
+    label: s.title,
+    options: s.plans.map((p) => ({
+      value: planValue(s.id, p.name),
+      label: p.name,
+      selectedLabel: `${s.title} – ${p.name}`,
+    })),
+  })),
 ];
 
 // Validation rules
@@ -95,11 +120,9 @@ const formHeading = (intent: BookingIntent): { title: string; sub: string } => {
 };
 
 // Phones: 16px text (iOS zooms the page into any field smaller than that) and a 46px tap height.
-// `compact` (the two drop-downs): 14px text and 42px height on phones, so long choices fit on one line.
-const inputClass = (hasError: boolean, compact = false) =>
-  `w-full px-3.5 py-2.5 text-sm ${
-    compact ? 'max-sm:text-[14px] max-sm:min-h-[42px] max-sm:px-3 max-sm:py-2' : 'max-sm:text-[16px] max-sm:min-h-[46px]'
-  } rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
+// (The two drop-downs are FormSelect, which has its own smaller text.)
+const inputClass = (hasError: boolean) =>
+  `w-full px-3.5 py-2.5 text-sm max-sm:text-[16px] max-sm:min-h-[46px] rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
     hasError ? 'border-[#C62828] focus:ring-[#C62828]/20 bg-red-50/20' : 'border-[#E1E6EF] focus:ring-[#1769FF]/20 focus:border-[#1769FF]'
   }`;
 
@@ -150,7 +173,7 @@ const AutoResetBar: React.FC<{ duration: number; paused: boolean; onDone: () => 
         />
       </div>
       <p className="text-[length:max(11px,calc(11rem/16))] text-slate-500 text-center">
-        {paused ? "Paused – move the mouse away to continue" : `Closing in ${Math.ceil(remaining / 1000)}s`}
+        {paused ? "Paused" : `Closing in ${Math.ceil(remaining / 1000)}s`}
       </p>
     </div>
   );
@@ -182,7 +205,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [resetPaused, setResetPaused] = useState(false);
+  // Success popup timer pauses while a mouse is over the card, or while the card is pressed / held
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [pressPaused, setPressPaused] = useState(false);
+  const resetPaused = hoverPaused || pressPaused;
   const [honeypot, setHoneypot] = useState('');
   const shownAt = useRef(Date.now());
 
@@ -238,7 +264,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     setTriedSubmit(false);
     setIsSubmitted(false);
     setSubmitError('');
-    setResetPaused(false);
+    setHoverPaused(false);
+    setPressPaused(false);
     shownAt.current = Date.now();
   };
 
@@ -275,6 +302,18 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
       window.removeEventListener('keydown', onKey);
     };
   }, [isSubmitted]);
+
+  // A press on the popup ends wherever the finger / button is released
+  useEffect(() => {
+    if (!pressPaused) return;
+    const release = () => setPressPaused(false);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [pressPaused]);
 
   /** Phone / tablet button that swaps between the form and the plans */
   const switchButton = (to: 'form' | 'plans') => (
@@ -449,17 +488,14 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           <label htmlFor="goal" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                             Your Goal <span className="text-slate-400 font-normal">(Optional)</span>
                           </label>
-                          <select
+                          <FormSelect
                             id="goal"
                             value={formData.goal}
-                            onChange={(e) => update({ goal: e.target.value })}
-                            className={`${inputClass(false, true)} cursor-pointer`}
-                          >
-                            <option value="">Select your goal</option>
-                            {GOALS.map((g) => (
-                              <option key={g} value={g}>{g}</option>
-                            ))}
-                          </select>
+                            onChange={(goal) => update({ goal })}
+                            disabled={isSubmitting}
+                            placeholder
+                            groups={GOAL_GROUPS}
+                          />
                         </div>
 
                         {/* 6. Plan (optional; preselected from the button clicked) */}
@@ -467,46 +503,55 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           <label htmlFor="plan" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
                             Plan <span className="text-slate-400 font-normal">(Optional)</span>
                           </label>
-                          <select
+                          <FormSelect
                             id="plan"
                             value={formData.plan}
-                            onChange={(e) => update({ plan: e.target.value })}
-                            className={`${inputClass(false, true)} cursor-pointer`}
-                          >
-                            <option value="">{planLabel('')}</option>
-                            <option value={TRIAL_VALUE}>{planLabel(TRIAL_VALUE)}</option>
-                            {SERVICES.map((s) => (
-                              <optgroup key={s.id} label={s.title}>
-                                {s.plans.map((p) => (
-                                  <option key={p.name} value={planValue(s.id, p.name)}>
-                                    {s.title} – {p.name}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            ))}
-                          </select>
+                            onChange={(plan) => update({ plan })}
+                            disabled={isSubmitting}
+                            groups={PLAN_GROUPS}
+                          />
                         </div>
 
-                        {/* Preferred contact method: Phone Call (default), WhatsApp, Email */}
-                        <div className="sm:col-span-2">
-                          <span className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">Preferred Contact Method</span>
-                          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Preferred contact method">
-                            {CONTACT_METHODS.map((method) => (
-                              <button
-                                key={method}
-                                type="button"
-                                role="radio"
-                                aria-checked={formData.contactMethod === method}
-                                onClick={() => update({ contactMethod: method })}
-                                className={`min-h-11 max-sm:min-h-[46px] py-2 px-2 sm:px-3 text-xs max-sm:text-[13px] font-semibold rounded-xl border transition-all cursor-pointer ${
-                                  formData.contactMethod === method
-                                    ? 'bg-[#EEF5FF] text-[#1769FF] border-[#1769FF]'
-                                    : 'bg-white text-slate-700 border-[#E1E6EF] hover:bg-slate-50'
-                                }`}
-                              >
-                                {method}
-                              </button>
-                            ))}
+                        {/* Preferred contact way: label and three round icons on one line
+                            (Phone Call is the default); the chosen way is named under the label */}
+                        <div className="sm:col-span-2 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <span id="contact-way-label" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
+                              Preferred Contact Way
+                            </span>
+                            <span className="block text-[length:max(12px,calc(12rem/16))] font-semibold text-[#1769FF] mt-0.5">
+                              {formData.contactMethod}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0" role="radiogroup" aria-labelledby="contact-way-label">
+                            {CONTACT_METHODS.map((method) => {
+                              const isChosen = formData.contactMethod === method;
+                              const isWhatsApp = method === 'WhatsApp';
+                              return (
+                                <button
+                                  key={method}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={isChosen}
+                                  aria-label={method}
+                                  title={method}
+                                  onClick={() => update({ contactMethod: method })}
+                                  className={`w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1769FF] ${
+                                    isChosen
+                                      ? isWhatsApp
+                                        ? 'bg-[#25D366] border-[#25D366] text-white shadow-md shadow-[#25D366]/30 scale-105'
+                                        : 'bg-[#1769FF] border-[#1769FF] text-white shadow-md shadow-[#1769FF]/30 scale-105'
+                                      : isWhatsApp
+                                        ? 'bg-white border-[#E1E6EF] text-[#25D366] hover:border-[#25D366]'
+                                        : 'bg-white border-[#E1E6EF] text-slate-500 hover:border-[#1769FF] hover:text-[#1769FF]'
+                                  }`}
+                                >
+                                  {method === 'Phone Call' && <Phone className="w-5 h-5" />}
+                                  {isWhatsApp && <WhatsAppIcon className="w-5 h-5" />}
+                                  {method === 'Email' && <Mail className="w-5 h-5" />}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -545,9 +590,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                       className="w-full py-3 sm:py-3.5 px-4 sm:px-5 min-h-[44px] max-sm:min-h-[48px] text-xs max-sm:text-[15px] sm:text-sm font-bold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.99] rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:cursor-wait disabled:bg-[#0B3D91]"
                     >
                       {isSubmitting ? (
+                        // While sending: only a spinner (no bar, no text)
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Submitting your details…</span>
+                          <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                          <span className="sr-only">Sending your request</span>
                         </>
                       ) : (
                         <>
@@ -556,11 +602,6 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                         </>
                       )}
                     </button>
-                    {isSubmitting && (
-                      <div className="mt-2 h-1 w-full rounded-full bg-[#E1E6EF] overflow-hidden" aria-hidden="true">
-                        <div className="enquiry-sending-bar h-full w-1/3 rounded-full bg-[#1769FF]" />
-                      </div>
-                    )}
                     <p className="text-[length:max(10px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-center text-slate-400 mt-2">
                       By submitting, you agree to be contacted by TeamSamir about this request. No spam.
                     </p>
@@ -573,7 +614,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
       </section>
 
       {/* Success popup (centre of the screen): green celebration, the submitted details and a
-          5-second bar below them; then it closes and a fresh form is ready. A mouse hover pauses. */}
+          5-second bar below them; then it closes and a fresh form is ready. Hover or press pauses. */}
       {isSubmitted && (
         <>
           <GreenConfetti />
@@ -586,9 +627,11 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               aria-modal="true"
               aria-labelledby="enquiry-success-title"
               className="w-full max-w-lg max-h-[90svh] overflow-y-auto rounded-3xl bg-white shadow-2xl border-t-4 border-[#16834A] p-5 sm:p-7 space-y-5 text-center enquiry-pop"
-              // Only a mouse hovering over the popup pauses the 5 s bar (a tap on a phone does not)
-              onPointerEnter={(e) => e.pointerType === 'mouse' && setResetPaused(true)}
-              onPointerLeave={(e) => e.pointerType === 'mouse' && setResetPaused(false)}
+              // The 5 s bar stops while a mouse is over the card (laptops) and while the card is
+              // pressed / held (any device); it carries on when the mouse leaves or the press ends
+              onPointerEnter={(e) => e.pointerType === 'mouse' && setHoverPaused(true)}
+              onPointerLeave={(e) => e.pointerType === 'mouse' && setHoverPaused(false)}
+              onPointerDown={() => setPressPaused(true)}
             >
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#16834A] flex items-center justify-center mx-auto ring-8 ring-emerald-50">
                 <CheckCircle2 className="w-10 h-10" />
