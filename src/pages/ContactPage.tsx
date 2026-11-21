@@ -197,8 +197,19 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     whatsappNumber: '',
     goal: '',
     plan: initialPlan(bookingIntent),
-    contactMethod: 'Phone Call',
+    contactMethod: 'WhatsApp',
   });
+
+  /** Copy of the enquiry that was sent, shown in the thank-you popup (the form itself is cleared) */
+  const [submitted, setSubmitted] = useState<{
+    name: string;
+    mobile: string;
+    whatsapp: string;
+    email: string;
+    goal: string;
+    plan: string;
+    contactMethod: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState<EnquiryFormData>(emptyForm);
   const [sameAsMobile, setSameAsMobile] = useState(true);
@@ -264,6 +275,17 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
         website: honeypot,
         elapsedMs: Date.now() - shownAt.current,
       });
+      // Keep what was sent for the popup, then empty the form straight away
+      setSubmitted({
+        name: formData.fullName.trim(),
+        mobile: formData.mobileNumber,
+        whatsapp: sameAsMobile ? formData.mobileNumber : formData.whatsappNumber,
+        email: formData.email.trim(),
+        goal: formData.goal,
+        plan: planLabel(formData.plan),
+        contactMethod: formData.contactMethod,
+      });
+      clearForm();
       setIsSubmitted(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not send your request. Please try again.');
@@ -275,17 +297,24 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     }
   };
 
-  const handleReset = () => {
-    setFormData(emptyForm());
+  /** Empties every field (plan back to "Not sure yet") and starts a new form fill */
+  const clearForm = () => {
+    setFormData({ ...emptyForm(), plan: '' });
     setSameAsMobile(true);
     setErrors({});
     setTriedSubmit(false);
-    setIsSubmitted(false);
     setSubmitError('');
-    setHoverPaused(false);
-    setPressPaused(false);
+    setHoneypot('');
     shownAt.current = Date.now();
     submissionId.current = newSubmissionId();
+  };
+
+  /** Closes the thank-you popup (the form was already cleared when the enquiry was accepted) */
+  const handleReset = () => {
+    setIsSubmitted(false);
+    setSubmitted(null);
+    setHoverPaused(false);
+    setPressPaused(false);
   };
 
   const whatsapp = sameAsMobile ? formData.mobileNumber : formData.whatsappNumber;
@@ -563,12 +592,12 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           />
                         </div>
 
-                        {/* Preferred contact way: label and three round icons on one line
-                            (Phone Call is the default); the chosen way is named under the label */}
+                        {/* Contact preference: label and two round icons (WhatsApp, the default, and Email)
+                            on one line; the chosen way is named under the label */}
                         <div className="sm:col-span-2 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <span id="contact-way-label" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
-                              Preferred Contact Way
+                              Contact Preference
                             </span>
                             <span className="block text-[length:max(12px,calc(12rem/16))] font-semibold text-[#1769FF] mt-0.5">
                               {formData.contactMethod}
@@ -587,7 +616,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                                   aria-label={method}
                                   title={method}
                                   onClick={() => update({ contactMethod: method })}
-                                  className={`w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1769FF] ${
+                                  className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1769FF] ${
                                     isChosen
                                       ? isWhatsApp
                                         ? 'bg-[#25D366] border-[#25D366] text-white shadow-md shadow-[#25D366]/30 scale-105'
@@ -597,9 +626,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                                         : 'bg-white border-[#E1E6EF] text-slate-500 hover:border-[#1769FF] hover:text-[#1769FF]'
                                   }`}
                                 >
-                                  {method === 'Phone Call' && <Phone className="w-5 h-5" />}
-                                  {isWhatsApp && <WhatsAppIcon className="w-5 h-5" />}
-                                  {method === 'Email' && <Mail className="w-5 h-5" />}
+                                  {isWhatsApp && <WhatsAppIcon className="w-4 h-4" />}
+                                  {method === 'Email' && <Mail className="w-4 h-4" />}
                                 </button>
                               );
                             })}
@@ -696,10 +724,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               </div>
               <div className="space-y-2">
                 <h3 id="enquiry-success-title" className="text-2xl sm:text-3xl font-display font-bold text-[#16834A]">
-                  Thank You, {formData.fullName.trim()}!
+                  Thank You, {submitted?.name}!
                 </h3>
                 <p className="text-sm text-[#646B78] leading-relaxed">
-                  We have your request. Our team will contact you by <strong className="text-[#171A21]">{formData.contactMethod}</strong> soon.
+                  We have your request. Our team will contact you by <strong className="text-[#171A21]">{submitted?.contactMethod}</strong> soon.
                 </p>
               </div>
 
@@ -708,13 +736,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                   Your Request
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
-                  <div><strong>Name:</strong> {formData.fullName.trim()}</div>
-                  <div><strong>Mobile:</strong> +91 {formData.mobileNumber}</div>
-                  <div><strong>WhatsApp:</strong> +91 {whatsapp}</div>
-                  <div className="break-all"><strong>Email:</strong> {formData.email.trim() || '—'}</div>
-                  <div><strong>Goal:</strong> {formData.goal || '—'}</div>
-                  <div><strong>Contact by:</strong> {formData.contactMethod}</div>
-                  <div className="sm:col-span-2"><strong>Plan:</strong> {planLabel(formData.plan)}</div>
+                  <div><strong>Name:</strong> {submitted?.name}</div>
+                  <div><strong>Mobile:</strong> +91 {submitted?.mobile}</div>
+                  <div><strong>WhatsApp:</strong> +91 {submitted?.whatsapp}</div>
+                  <div className="break-all"><strong>Email:</strong> {submitted?.email || '—'}</div>
+                  <div><strong>Goal:</strong> {submitted?.goal || '—'}</div>
+                  <div><strong>Contact by:</strong> {submitted?.contactMethod}</div>
+                  <div className="sm:col-span-2"><strong>Plan:</strong> {submitted?.plan}</div>
                 </div>
               </div>
 
@@ -748,7 +776,6 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-[#171A21] tracking-tight">
                 Trainer & Location Info
               </h2>
-              <p className="text-xs sm:text-sm text-[#646B78] mt-1">Coaching available in Kothrud, Pune.</p>
             </div>
             <a
               href={`tel:${BUSINESS_INFO.contact.phoneRaw}`}

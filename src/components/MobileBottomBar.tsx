@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { Home, Dumbbell, HeartPulse, TrendingUp, UserRound, X } from 'lucide-react';
+import { Home, Dumbbell, HeartPulse, TrendingUp, UserRound, X, ClipboardList } from 'lucide-react';
 import { PageId } from '../types';
 import { pageLink } from '../lib/routes';
 
@@ -128,6 +128,22 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
               transition={{ type: 'spring', stiffness: 380, damping: 30, delay: 0.05 }}
             />
 
+            {/* Enquiry Form: highlighted button on top of the half circle (a sixth circle on the arc
+                would make the top labels overlap on phones) */}
+            <motion.a
+              {...pageLink('contact', go)}
+              aria-current={currentPage === 'contact' ? 'page' : undefined}
+              className="absolute left-1/2 inline-flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full bg-white text-[#1769FF] text-[length:max(13px,calc(13rem/16))] font-bold border-2 border-[#1769FF] shadow-[0_10px_30px_-6px_rgba(23,105,255,0.6)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/70 cursor-pointer"
+              style={{ bottom: BAR_HEIGHT + discRadius + 12, x: '-50%' }}
+              initial={{ y: 30, scale: 0.6, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 30, scale: 0.6, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28, delay: 0.12 }}
+            >
+              <ClipboardList className="w-4 h-4" />
+              Enquiry Form
+            </motion.a>
+
             <nav aria-label="All pages">
               {MENU_ITEMS.map(({ id, label, icon: Icon }, i) => {
                 const rad = (ANGLES[i] * Math.PI) / 180;
@@ -148,11 +164,12 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
                     exit={{ x: 0, y: 0, scale: 0.3, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 420, damping: 30, delay: i * 0.025 }}
                   >
+                    {/* Solid brand colours: blue circles with white icons; the current page is white with a blue icon */}
                     <span
-                      className={`w-[52px] h-[52px] rounded-full flex items-center justify-center border shadow-lg backdrop-blur-md transition-colors group-focus-visible:ring-2 group-focus-visible:ring-white ${
+                      className={`w-[52px] h-[52px] rounded-full flex items-center justify-center border-2 shadow-lg transition-colors group-focus-visible:ring-2 group-focus-visible:ring-white ${
                         isActive
-                          ? 'bg-[#1769FF] border-[#5CA0FF] text-white shadow-[#1769FF]/40'
-                          : 'bg-white/25 border-white/50 text-white group-hover:bg-white/40'
+                          ? 'bg-white border-[#1769FF] text-[#1769FF] ring-4 ring-[#1769FF]/35 shadow-[#1769FF]/40'
+                          : 'bg-gradient-to-br from-[#2A7BFF] to-[#0B3D91] border-white/70 text-white shadow-[#0B3D91]/50 group-hover:from-[#1769FF] group-hover:to-[#0B2A66]'
                       }`}
                     >
                       <Icon className="w-5 h-5" />
