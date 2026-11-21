@@ -34,32 +34,65 @@ const shortHours = (hours: string) =>
     .replace(/\s*–\s*/g, '–')
     .trim();
 
+/** Android browsers that understand Chrome's `intent://` links (Chrome, Samsung Internet, Edge, Brave) */
+const supportsIntentLinks = (ua: string) =>
+  /Chrome\/\d+/.test(ua) &&
+  !/HeyTapBrowser|OppoBrowser|VivoBrowser|MiuiBrowser|XiaoMi|UCBrowser|OPR\/|Opera|Firefox|YaBrowser|PHX\//i.test(ua);
+
+/** Built-in browsers of other apps (WhatsApp/Facebook/Instagram/Android WebView): they block app links */
+const isInAppBrowser = (ua: string) => /; wv\)|FBAN|FBAV|Instagram|Line\/|Snapchat/i.test(ua);
+
 /**
- * Opens the Instagram profile in the Instagram app when possible.
- * - Android: an intent link that asks Android to open the profile in the Instagram app;
- *   if the app isn't installed, the browser opens the web profile instead. (A plain
- *   instagram.com link often stays in Chrome even when the app is installed.)
+ * Opens the Instagram profile in the Instagram app when possible, otherwise on the web.
+ * - Android, Chrome / Samsung Internet / Edge: an intent link for the Instagram app;
+ *   without the app, the browser opens the web profile itself.
+ * - Android, other browsers (Oppo, Vivo, Xiaomi, Realme, UC, Opera, Firefox): the
+ *   `instagram://` app address; if no app has opened after 1.5 s, the web profile opens.
+ *   This also reaches Instagram Lite on phones that only have Lite.
  * - iPhone / iPad: the instagram.com link in the same tab, which iOS hands to the
- *   Instagram app when it is installed (otherwise the web profile opens).
- * - Computers: the web profile in a new tab (the normal link). A website can't open the
- *   Windows / Mac Instagram app.
+ *   Instagram app when it is installed.
+ * - In-app browsers (link opened inside WhatsApp, Facebook, Instagram...): the web
+ *   profile, because these block app links.
+ * - Computers: the web profile in a new tab. Websites can't open the Windows / Mac app.
  */
 const openInstagram = (e: React.MouseEvent<HTMLAnchorElement>) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
   const { instagramHandle, instagramUrl } = BUSINESS_INFO.social;
   const ua = navigator.userAgent;
-  if (/Android/i.test(ua)) {
-    e.preventDefault();
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  if (!isAndroid && !isIOS) return; // computers: normal new-tab link
+
+  e.preventDefault();
+
+  if (isIOS || isInAppBrowser(ua)) {
+    window.location.href = instagramUrl;
+    return;
+  }
+
+  if (supportsIntentLinks(ua)) {
     window.location.href =
       `intent://www.instagram.com/_u/${instagramHandle}/#Intent;scheme=https;package=com.instagram.android;` +
       `S.browser_fallback_url=${encodeURIComponent(instagramUrl)};end`;
     return;
   }
-  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-  if (isIOS) {
-    e.preventDefault();
-    window.location.href = instagramUrl;
-  }
+
+  // Other Android browsers: try the app address, fall back to the web profile if no app opened
+  let appOpened = false;
+  const onHide = () => {
+    if (document.hidden) appOpened = true;
+  };
+  const onBlur = () => {
+    appOpened = true;
+  };
+  document.addEventListener('visibilitychange', onHide);
+  window.addEventListener('blur', onBlur, { once: true });
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    window.removeEventListener('blur', onBlur);
+    if (!appOpened && !document.hidden) window.location.href = instagramUrl;
+  }, 1500);
+  window.location.href = `instagram://user?username=${instagramHandle}`;
 };
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
@@ -139,9 +172,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
               <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A3FF] shrink-0 mt-0.5" />
               <p className="text-white font-medium text-xs sm:text-sm">
                 {BUSINESS_INFO.location.fullAddress}
-                <span className="sm:hidden text-slate-400 font-normal">, Maharashtra 411038</span>
-                <span className="hidden sm:block text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-400 font-normal mt-0.5">
-                  Pune, Maharashtra 411038
+                <span className="block text-[length:max(11px,calc(11rem/16))] sm:text-xs text-slate-400 font-normal mt-0.5">
+                  Maharashtra 411038
                 </span>
               </p>
             </div>
