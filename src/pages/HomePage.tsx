@@ -361,12 +361,12 @@ export const HomePage: React.FC<HomePageProps> = ({
           ============================================================ */}
       <section className="py-8 sm:py-12 lg:py-14 bg-slate-50 border-b border-[#E1E6EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <UsVsThem onBookDemo={() => onBookDemo({ kind: 'all', heading: 'Book Your Free Assessment Demo' })} />
+          <UsVsThem onBookDemo={() => onBookDemo({ kind: 'all', heading: 'Book Free Consultation' })} />
         </div>
       </section>
 
       {/* ============================================================
-          H. FREE DEMO CTA SECTION (Strong Blue Callout Panel). Hidden on phones.
+          H. FREE CONSULTATION CTA SECTION (Strong Blue Callout Panel). Hidden on phones.
           ============================================================ */}
       <section className="hidden sm:block py-8 sm:py-12 lg:py-14 bg-[#1769FF] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4 sm:space-y-6">
@@ -385,7 +385,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           <div className="pt-2 sm:pt-4 grid grid-cols-2 sm:flex sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-4 max-w-sm sm:max-w-none mx-auto">
             <button
-              onClick={() => onBookDemo({ kind: 'all', heading: 'Book Your Free Demo' })}
+              onClick={() => onBookDemo({ kind: 'all', heading: 'Book Free Consultation' })}
               className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-8 py-2 sm:py-3.5 min-h-[40px] sm:min-h-[46px] text-xs sm:text-sm font-bold text-[#1769FF] bg-white hover:bg-slate-100 active:scale-95 rounded-lg sm:rounded-xl shadow-xl transition-all cursor-pointer"
             >
               <span>Free Consultation</span>

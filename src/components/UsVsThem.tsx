@@ -163,7 +163,7 @@ export const UsVsThem: React.FC<UsVsThemProps> = ({ onBookDemo, className = '' }
               onClick={onBookDemo}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1769FF] hover:bg-[#00A3FF] text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
             >
-              <span>Book Your Free Assessment Demo</span>
+              <span>Book Free Consultation</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}

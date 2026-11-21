@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   // Only the user's own scrolling counts: layout changes (the rotating hero headline,
   // images and videos loading, carousels) also fire scroll events, and those must not
   // make the header slide in and out on its own.
-  // While it is hidden, a floating "Free Consultation" button takes its place.
+  // While it is hidden, a floating "Enquiry Form" button takes its place.
   const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
@@ -150,10 +150,10 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: Primary CTA on every screen (the page menu on phones and tablets is in MobileBottomBar) */}
         <button
           onClick={onBookDemo}
-          className="inline-flex items-center justify-center gap-1.5 min-h-[38px] sm:min-h-[44px] px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
+          className="inline-flex items-center justify-center gap-1.5 min-h-[32px] sm:min-h-[38px] px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
         >
           <Calendar className="w-3.5 h-3.5 sm:hidden shrink-0" />
-          Free Consultation
+          Enquiry Form
         </button>
 
       </div>
@@ -183,17 +183,17 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
     </header>
 
-    {/* Floating "Free Consultation" shown only while the header is hidden */}
+    {/* Floating "Enquiry Form" shown only while the header is hidden */}
     <button
       onClick={onBookDemo}
       tabIndex={isHidden ? 0 : -1}
       aria-hidden={!isHidden}
-      className={`fixed top-3 right-3 sm:right-6 lg:right-8 z-40 inline-flex items-center gap-2 min-h-[44px] px-4 lg:px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-xl shadow-lg shadow-[#1769FF]/30 transition-all duration-300 ease-out cursor-pointer whitespace-nowrap ${
+      className={`fixed top-3 right-3 sm:right-6 lg:right-8 z-40 inline-flex items-center gap-2 min-h-[36px] sm:min-h-[40px] px-4 lg:px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-xl shadow-lg shadow-[#1769FF]/30 transition-all duration-300 ease-out cursor-pointer whitespace-nowrap ${
         isHidden ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0 pointer-events-none'
       }`}
     >
       <Calendar className="w-4 h-4 shrink-0" />
-      Free Consultation
+      Enquiry Form
     </button>
     </>
   );

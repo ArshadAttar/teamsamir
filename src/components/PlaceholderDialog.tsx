@@ -73,7 +73,7 @@ export const PlaceholderDialog: React.FC<PlaceholderDialogProps> = ({
                 </div>
               </div>
               <p className="text-xs text-[#646B78] leading-relaxed">
-                Tapping this button opens WhatsApp with an automatic pre-populated message: <em className="text-slate-800">"Hi Samir, I'm interested in booking a free demo personal training session in Kothrud, Pune."</em>
+                Tapping this button opens WhatsApp with an automatic pre-populated message: <em className="text-slate-800">"Hii TeamSamir, I want to book a free consultation call"</em>
               </p>
             </div>
           )}

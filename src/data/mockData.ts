@@ -35,6 +35,8 @@ export const BUSINESS_INFO = {
     whatsappNumber: '917972688921',
     email: 'teamsamir7@gmail.com',
     workingHours: 'Mon – Sat: 6:00 AM – 10:00 PM,  IST',
+    /** Message pre-filled in WhatsApp by every WhatsApp link on the site */
+    whatsappMessage: 'Hii TeamSamir, I want to book a free consultation call',
   },
   social: {
     instagramHandle: 'teamsamir_india',

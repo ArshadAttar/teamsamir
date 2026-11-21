@@ -100,7 +100,7 @@ export default function App({ initialPage }: AppProps) {
       <Header
         currentPage={currentPage as PageId}
         onNavigate={handleNavigate}
-        onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Your Free Call' })}
+        onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Free Consultation' })}
       />
 
       {/* 3. Page views (URL-driven, see src/lib/routes.ts) */}
@@ -173,7 +173,7 @@ export default function App({ initialPage }: AppProps) {
       {/* 4. Global Footer */}
       <Footer
         onNavigate={handleNavigate}
-        onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Your Free Demo Session' })}
+        onBookDemo={() => handleBookDemo({ kind: 'all', heading: 'Book Free Consultation' })}
       />
 
       {/* 5. Mobile bottom bar: Home, Menu (half-circle page menu), Transformations */}

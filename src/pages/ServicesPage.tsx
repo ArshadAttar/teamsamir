@@ -319,7 +319,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
                 Not Sure Which Training Format Fits You?
               </h2>
               <p className="text-xs sm:text-sm text-[#646B78] max-w-2xl leading-relaxed">
-                Our team will assess your current fitness, daily routine, and preferred way of training during a free discovery demo.
+                Our team will assess your current fitness, daily routine, and preferred way of training during a free consultation.
               </p>
             </div>
             <button

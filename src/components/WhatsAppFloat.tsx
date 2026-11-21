@@ -14,7 +14,7 @@ export const WhatsAppIcon: React.FC<{ className?: string }> = ({ className = '' 
  */
 export const WhatsAppFloat: React.FC = () => {
   const href = `https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
+    BUSINESS_INFO.contact.whatsappMessage
   )}`;
 
   return (

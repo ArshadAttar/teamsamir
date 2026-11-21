@@ -20,6 +20,8 @@ interface EnquiryPlanPanelProps {
   intent: BookingIntent;
   selectedPlan: string;
   onSelectPlan: (value: string) => void;
+  /** Shown at the top right of the panel (the phone "Enquiry Form" switch button) */
+  headerAction?: React.ReactNode;
 }
 
 const TrialCard: React.FC<{ selected: boolean; onSelect: () => void }> = ({ selected, onSelect }) => (
@@ -119,7 +121,7 @@ const ServiceGroup: React.FC<{ service: ServiceItem; selectedPlan: string; onSel
  * (in a scrollable list) depending on the button the visitor came from. Clicking a plan
  * selects it in the form's Plan field.
  */
-export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, selectedPlan, onSelectPlan }) => {
+export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, selectedPlan, onSelectPlan, headerAction }) => {
   const service = intent.kind === 'service' ? SERVICES.find((s) => s.id === intent.serviceId) : undefined;
 
   const title =
@@ -134,9 +136,12 @@ export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, sele
   return (
     <div className="rounded-2xl sm:rounded-3xl border border-[#E1E6EF] bg-slate-50 p-4 sm:p-6 space-y-4">
       <div>
-        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1769FF] uppercase tracking-wider">
-          <Tag className="w-3.5 h-3.5" />
-          Plan Details
+        <div className="flex items-center justify-between gap-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1769FF] uppercase tracking-wider">
+            <Tag className="w-3.5 h-3.5" />
+            Plan Details
+          </div>
+          {headerAction}
         </div>
         <h2 className="text-xl sm:text-2xl font-display font-bold text-[#171A21] mt-1">{title}</h2>
         <p className="text-xs sm:text-sm text-[#646B78] mt-1">{subtitle}</p>
@@ -149,8 +154,9 @@ export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, sele
       {service && <ServiceGroup service={service} selectedPlan={selectedPlan} onSelectPlan={onSelectPlan} />}
 
       {intent.kind !== 'trial' && !service && (
-        // All plans: scrolls inside its own box so the form stays in view
-        <div className="max-h-[60vh] lg:max-h-[42rem] overflow-y-auto overscroll-contain pr-1 pt-2 -mr-1 space-y-6">
+        // All plans: scrolls inside its own box so the form stays in view. At either end of
+        // the list, scrolling carries on to the page (no overscroll-contain).
+        <div className="max-h-[60vh] lg:max-h-[42rem] overflow-y-auto overscroll-auto pr-1 pt-2 -mr-1 space-y-6">
           <TrialCard selected={selectedPlan === TRIAL_VALUE} onSelect={() => onSelectPlan(TRIAL_VALUE)} />
           {SERVICES.map((s) => (
             <ServiceGroup key={s.id} service={s} selectedPlan={selectedPlan} onSelectPlan={onSelectPlan} />

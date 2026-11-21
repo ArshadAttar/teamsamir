@@ -3,6 +3,7 @@ import { submitEnquiry } from '../lib/submitEnquiry';
 import { BookingIntent, EnquiryFormData, EnquiryFormErrors } from '../types';
 import { BUSINESS_INFO, SERVICES } from '../data/mockData';
 import { EnquiryPlanPanel, planLabel, planValue, TRIAL_VALUE } from '../components/EnquiryPlanPanel';
+import { GreenConfetti } from '../components/GreenConfetti';
 import {
   MapPin,
   Phone,
@@ -16,6 +17,9 @@ import {
   RotateCcw,
   Sparkles,
   Send,
+  Loader2,
+  Tag,
+  ClipboardList,
 } from 'lucide-react';
 
 interface ContactPageProps {
@@ -78,7 +82,7 @@ const initialPlan = (intent: BookingIntent): string => {
 
 /** Form heading follows the button the visitor clicked */
 const formHeading = (intent: BookingIntent): { title: string; sub: string } => {
-  if (intent.heading) return { title: intent.heading, sub: 'Share your details and we will call you to plan your first session.' };
+  if (intent.heading) return { title: intent.heading, sub: 'Fill in the form and our team will contact you.' };
   if (intent.kind === 'trial') return { title: 'Book Trial – INR 1,999', sub: 'Start your 1-Week trial with TeamSamir. We will call you to confirm your slot.' };
   if (intent.kind === 'service') {
     const service = SERVICES.find((s) => s.id === intent.serviceId);
@@ -87,12 +91,15 @@ const formHeading = (intent: BookingIntent): { title: string; sub: string } => {
       ? { title: `Book ${name} – ${intent.planName}`, sub: 'Your chosen plan is already selected below. We will call you to confirm the details.' }
       : { title: `Enquire for ${name}`, sub: 'Share your details and we will help you pick the right plan.' };
   }
-  return { title: 'Book Your Free Demo Session', sub: 'Share your details and we will call you to plan your free demo.' };
+  return { title: 'Book Free Consultation', sub: 'Fill in the form and our team will contact you.' };
 };
 
-// Phones: 16px text (iOS zooms the page into any field smaller than that) and a 46px tap height
-const inputClass = (hasError: boolean) =>
-  `w-full px-3.5 py-2.5 text-sm max-sm:text-[16px] max-sm:min-h-[46px] rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
+// Phones: 16px text (iOS zooms the page into any field smaller than that) and a 46px tap height.
+// `compact` (the two drop-downs): 14px text and 42px height on phones, so long choices fit on one line.
+const inputClass = (hasError: boolean, compact = false) =>
+  `w-full px-3.5 py-2.5 text-sm ${
+    compact ? 'max-sm:text-[14px] max-sm:min-h-[42px] max-sm:px-3 max-sm:py-2' : 'max-sm:text-[16px] max-sm:min-h-[46px]'
+  } rounded-xl border bg-white focus:outline-none focus:ring-2 transition-all disabled:bg-slate-50 disabled:text-slate-500 ${
     hasError ? 'border-[#C62828] focus:ring-[#C62828]/20 bg-red-50/20' : 'border-[#E1E6EF] focus:ring-[#1769FF]/20 focus:border-[#1769FF]'
   }`;
 
@@ -138,12 +145,12 @@ const AutoResetBar: React.FC<{ duration: number; paused: boolean; onDone: () => 
         aria-valuenow={Math.ceil(remaining / 1000)}
       >
         <div
-          className={`h-full rounded-full ${paused ? 'bg-slate-400' : 'bg-[#1769FF]'}`}
+          className={`h-full rounded-full ${paused ? 'bg-slate-400' : 'bg-[#16834A]'}`}
           style={{ width: `${(remaining / duration) * 100}%` }}
         />
       </div>
-      <p className="text-[length:max(11px,calc(11rem/16))] text-slate-500">
-        {paused ? 'Paused – move away to continue' : `A new form opens in ${Math.ceil(remaining / 1000)}s · hover to pause`}
+      <p className="text-[length:max(11px,calc(11rem/16))] text-slate-500 text-center">
+        {paused ? "Paused – move the mouse away to continue" : `Closing in ${Math.ceil(remaining / 1000)}s`}
       </p>
     </div>
   );
@@ -237,17 +244,56 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
   const whatsapp = sameAsMobile ? formData.mobileNumber : formData.whatsappNumber;
 
+  // Phones and tablets show the form or the plans, one at a time, with a button to switch
+  const [mobileView, setMobileView] = useState<'form' | 'plans'>('form');
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const switchView = (view: 'form' | 'plans') => {
+    setMobileView(view);
+    // Bring the top of the card back into view after switching
+    requestAnimationFrame(() => {
+      const top = sectionRef.current?.getBoundingClientRect().top;
+      if (top !== undefined && top < 0) sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  // Success popup: lock page scroll, Escape closes it
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const resetRef = useRef(handleReset);
+  resetRef.current = handleReset;
+  useEffect(() => {
+    if (!isSubmitted) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') resetRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isSubmitted]);
+
+  /** Phone / tablet button that swaps between the form and the plans */
+  const switchButton = (to: 'form' | 'plans') => (
+    <button
+      type="button"
+      onClick={() => switchView(to)}
+      className="lg:hidden inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg border border-[#1769FF] bg-[#EEF5FF] text-[#1769FF] text-xs font-bold hover:bg-[#1769FF] hover:text-white transition-colors cursor-pointer"
+    >
+      {to === 'plans' ? <Tag className="w-3.5 h-3.5" /> : <ClipboardList className="w-3.5 h-3.5" />}
+      {to === 'plans' ? 'Plans' : 'Enquiry Form'}
+    </button>
+  );
+
   return (
     <div className="bg-white">
       {/* Page Hero */}
       <section className="bg-[#111318] text-white py-8 sm:py-12 lg:py-14 border-b border-[#1C2028]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-2.5 sm:space-y-4">
-            <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 text-[length:max(11px,calc(11rem/16))] sm:text-xs font-semibold text-[#00A3FF] uppercase tracking-wider [&>span]:whitespace-nowrap">
-              <span>Pune Direct Consultation</span>
-              <span className="text-slate-500">·</span>
-              <span>Complimentary 1-on-1 Demo</span>
-            </div>
             <h1 className="text-xl sm:text-3xl lg:text-5xl font-display font-extrabold tracking-tight text-white text-balance">
               Let's Plan Your Fitness Journey
             </h1>
@@ -258,271 +304,229 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
         </div>
       </section>
 
-      {/* Section 1: Plans (left) + Enquiry form (right) */}
-      <section className="py-8 sm:py-12 lg:py-14 border-b border-[#E1E6EF]">
+      {/* Section 1: Plans (left) + Enquiry form (right) on desktop.
+          Phones and tablets: the form first; the "Plans" button swaps it for the plan list and back. */}
+      <section ref={sectionRef} className="scroll-mt-28 py-8 sm:py-12 lg:py-14 border-b border-[#E1E6EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start">
-            <div className="lg:col-span-5">
+            <div className={`lg:col-span-5 ${mobileView === 'plans' ? '' : 'max-lg:hidden'}`}>
               <EnquiryPlanPanel
                 intent={bookingIntent}
                 selectedPlan={formData.plan}
-                onSelectPlan={(plan) => update({ plan })}
+                onSelectPlan={(plan) => {
+                  update({ plan });
+                  // Phones / tablets: back to the form with the plan selected
+                  if (window.matchMedia('(max-width: 1023.98px)').matches) switchView('form');
+                }}
+                headerAction={switchButton('form')}
               />
             </div>
 
-            <div className="lg:col-span-7">
+            <div className={`lg:col-span-7 ${mobileView === 'form' ? '' : 'max-lg:hidden'}`}>
               <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E1E6EF] p-4 sm:p-6 lg:p-8 shadow-sm">
-                {isSubmitted ? (
-                  /* Success state: auto-returns to a fresh form after 5s; hover or focus pauses */
-                  <div
-                    className="space-y-6 text-center py-6 animate-in fade-in zoom-in-95 duration-300"
-                    onMouseEnter={() => setResetPaused(true)}
-                    onMouseLeave={() => setResetPaused(false)}
-                    onFocus={() => setResetPaused(true)}
-                    onBlur={(e) => {
-                      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setResetPaused(false);
-                    }}
-                  >
-                    <AutoResetBar duration={SUCCESS_RESET_MS} paused={resetPaused} onDone={handleReset} />
-                    <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#16834A] flex items-center justify-center mx-auto">
-                      <CheckCircle2 className="w-10 h-10" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-2xl sm:text-3xl font-display font-bold text-[#171A21]">
-                        Thank You, {formData.fullName.trim()}!
-                      </h3>
-                      <p className="text-sm text-[#646B78] max-w-md mx-auto leading-relaxed">
-                        We have your request. Samir's team will contact you by <strong className="text-[#171A21]">{formData.contactMethod}</strong> soon.
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left text-xs space-y-2.5 max-w-lg mx-auto">
-                      <div className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-1 border-b border-slate-200">
-                        Your Request
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
-                        <div><strong>Name:</strong> {formData.fullName.trim()}</div>
-                        <div><strong>Mobile:</strong> +91 {formData.mobileNumber}</div>
-                        <div><strong>WhatsApp:</strong> +91 {whatsapp}</div>
-                        <div><strong>Email:</strong> {formData.email.trim() || '—'}</div>
-                        <div><strong>Goal:</strong> {formData.goal || '—'}</div>
-                        <div><strong>Contact by:</strong> {formData.contactMethod}</div>
-                        <div className="sm:col-span-2"><strong>Plan:</strong> {planLabel(formData.plan)}</div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 max-w-lg mx-auto flex items-start gap-2.5 text-left">
-                      <ShieldCheck className="w-4 h-4 text-[#1769FF] shrink-0 mt-0.5" />
-                      <p className="leading-relaxed">
-                        Your details are shared only with Samir's team and used only to contact you about this request.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={handleReset}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1769FF] text-white font-semibold text-xs hover:bg-[#0B3D91] transition-all cursor-pointer shadow-sm"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Submit Another Request</span>
-                    </button>
-                  </div>
-                ) : (
-                  /* Enquiry form: 6 fields + preferred contact method */
-                  <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6">
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-[#1769FF] uppercase tracking-wider">Enquiry Form</span>
+                {/* Enquiry form: 6 fields + preferred contact method */}
+                <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6" aria-busy={isSubmitting}>
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[#1769FF] uppercase tracking-wider">Enquiry Form</span>
+                      <div className="flex items-center gap-3">
                         <span className="text-xs text-slate-400"><span className="text-red-500">*</span> Required</span>
+                        {switchButton('plans')}
                       </div>
-                      <h2 className="text-xl sm:text-2xl font-display font-bold text-[#171A21] mt-1">{heading.title}</h2>
-                      <p className="text-xs sm:text-sm text-[#646B78] mt-1">{heading.sub}</p>
                     </div>
+                    <h2 className="text-xl sm:text-2xl font-display font-bold text-[#171A21] mt-1">{heading.title}</h2>
+                    <p className="text-xs sm:text-sm text-[#646B78] mt-1">{heading.sub}</p>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* 1. Name (required) */}
-                      <div>
-                        <label htmlFor="fullName" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
-                          Full Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="fullName"
-                          type="text"
-                          autoComplete="name"
-                          maxLength={NAME_MAX}
-                          value={formData.fullName}
-                          onChange={(e) => update({ fullName: e.target.value })}
-                          placeholder="e.g. Rahul Patil"
-                          aria-invalid={!!errors.fullName}
-                          aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-                          className={inputClass(!!errors.fullName)}
-                        />
-                        <FieldError id="fullName-error" message={errors.fullName} />
-                      </div>
-
-                      {/* 2. Email (optional) */}
-                      <div>
-                        <label htmlFor="email" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
-                          Email <span className="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <input
-                          id="email"
-                          type="email"
-                          inputMode="email"
-                          autoComplete="email"
-                          maxLength={EMAIL_MAX}
-                          value={formData.email}
-                          onChange={(e) => update({ email: e.target.value })}
-                          placeholder="rahul@example.com"
-                          aria-invalid={!!errors.email}
-                          aria-describedby={errors.email ? 'email-error' : undefined}
-                          className={inputClass(!!errors.email)}
-                        />
-                        <FieldError id="email-error" message={errors.email} />
-                      </div>
-
-                      {/* 3. Mobile number (required, 10 digits) */}
-                      <div>
-                        <label htmlFor="mobileNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
-                          Mobile Number <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
-                          <input
-                            id="mobileNumber"
-                            type="tel"
-                            inputMode="numeric"
-                            autoComplete="tel-national"
-                            maxLength={PHONE_LEN}
-                            value={formData.mobileNumber}
-                            onChange={(e) => update({ mobileNumber: digitsOnly(e.target.value) })}
-                            placeholder="98765 43210"
-                            aria-invalid={!!errors.mobileNumber}
-                            aria-describedby={errors.mobileNumber ? 'mobileNumber-error' : undefined}
-                            className={`${inputClass(!!errors.mobileNumber)} pl-12 max-sm:pl-[52px]`}
-                          />
-                        </div>
-                        <FieldError id="mobileNumber-error" message={errors.mobileNumber} />
-                      </div>
-
-                      {/* 4. WhatsApp number (required, 10 digits; can copy mobile) */}
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <label htmlFor="whatsappNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
-                            WhatsApp Number <span className="text-red-500">*</span>
+                  {/* Fields are locked while the request is being sent */}
+                  <fieldset disabled={isSubmitting} className="min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* 1. Name (required) */}
+                        <div>
+                          <label htmlFor="fullName" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                            Full Name <span className="text-red-500">*</span>
                           </label>
-                          <label className="inline-flex items-center gap-1.5 min-h-8 text-[length:max(12px,calc(12rem/16))] text-[#646B78] cursor-pointer">
+                          <input
+                            id="fullName"
+                            type="text"
+                            autoComplete="name"
+                            maxLength={NAME_MAX}
+                            value={formData.fullName}
+                            onChange={(e) => update({ fullName: e.target.value })}
+                            placeholder="e.g. Rahul Patil"
+                            aria-invalid={!!errors.fullName}
+                            aria-describedby={errors.fullName ? 'fullName-error' : undefined}
+                            className={inputClass(!!errors.fullName)}
+                          />
+                          <FieldError id="fullName-error" message={errors.fullName} />
+                        </div>
+
+                        {/* 2. Email (optional) */}
+                        <div>
+                          <label htmlFor="email" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                            Email <span className="text-slate-400 font-normal">(Optional)</span>
+                          </label>
+                          <input
+                            id="email"
+                            type="email"
+                            inputMode="email"
+                            autoComplete="email"
+                            maxLength={EMAIL_MAX}
+                            value={formData.email}
+                            onChange={(e) => update({ email: e.target.value })}
+                            placeholder="rahul@example.com"
+                            aria-invalid={!!errors.email}
+                            aria-describedby={errors.email ? 'email-error' : undefined}
+                            className={inputClass(!!errors.email)}
+                          />
+                          <FieldError id="email-error" message={errors.email} />
+                        </div>
+
+                        {/* 3. Mobile number (required, 10 digits) */}
+                        <div>
+                          <label htmlFor="mobileNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                            Mobile Number <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
                             <input
-                              type="checkbox"
-                              checked={sameAsMobile}
-                              onChange={(e) => {
-                                setSameAsMobile(e.target.checked);
-                                update({}, e.target.checked);
-                              }}
-                              className="w-4 h-4 rounded text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
+                              id="mobileNumber"
+                              type="tel"
+                              inputMode="numeric"
+                              autoComplete="tel-national"
+                              maxLength={PHONE_LEN}
+                              value={formData.mobileNumber}
+                              onChange={(e) => update({ mobileNumber: digitsOnly(e.target.value) })}
+                              placeholder="98765 43210"
+                              aria-invalid={!!errors.mobileNumber}
+                              aria-describedby={errors.mobileNumber ? 'mobileNumber-error' : undefined}
+                              className={`${inputClass(!!errors.mobileNumber)} pl-12 max-sm:pl-[52px]`}
                             />
-                            Same as mobile
+                          </div>
+                          <FieldError id="mobileNumber-error" message={errors.mobileNumber} />
+                        </div>
+
+                        {/* 4. WhatsApp number (required, 10 digits; can copy mobile) */}
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <label htmlFor="whatsappNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
+                              WhatsApp Number <span className="text-red-500">*</span>
+                            </label>
+                            <label className="inline-flex items-center gap-1.5 min-h-8 text-[length:max(12px,calc(12rem/16))] text-[#646B78] cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={sameAsMobile}
+                                onChange={(e) => {
+                                  setSameAsMobile(e.target.checked);
+                                  update({}, e.target.checked);
+                                }}
+                                className="w-4 h-4 rounded text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
+                              />
+                              Same as mobile
+                            </label>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
+                            <input
+                              id="whatsappNumber"
+                              type="tel"
+                              inputMode="numeric"
+                              maxLength={PHONE_LEN}
+                              value={whatsapp}
+                              disabled={sameAsMobile}
+                              onChange={(e) => update({ whatsappNumber: digitsOnly(e.target.value) })}
+                              placeholder="98765 43210"
+                              aria-invalid={!!errors.whatsappNumber}
+                              aria-describedby={errors.whatsappNumber ? 'whatsappNumber-error' : undefined}
+                              className={`${inputClass(!!errors.whatsappNumber)} pl-12 max-sm:pl-[52px]`}
+                            />
+                          </div>
+                          <FieldError id="whatsappNumber-error" message={errors.whatsappNumber} />
+                        </div>
+
+                        {/* 5. Goal (optional) */}
+                        <div>
+                          <label htmlFor="goal" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                            Your Goal <span className="text-slate-400 font-normal">(Optional)</span>
                           </label>
+                          <select
+                            id="goal"
+                            value={formData.goal}
+                            onChange={(e) => update({ goal: e.target.value })}
+                            className={`${inputClass(false, true)} cursor-pointer`}
+                          >
+                            <option value="">Select your goal</option>
+                            {GOALS.map((g) => (
+                              <option key={g} value={g}>{g}</option>
+                            ))}
+                          </select>
                         </div>
-                        <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs max-sm:text-[15px] font-semibold text-slate-500">+91</span>
-                          <input
-                            id="whatsappNumber"
-                            type="tel"
-                            inputMode="numeric"
-                            maxLength={PHONE_LEN}
-                            value={whatsapp}
-                            disabled={sameAsMobile}
-                            onChange={(e) => update({ whatsappNumber: digitsOnly(e.target.value) })}
-                            placeholder="98765 43210"
-                            aria-invalid={!!errors.whatsappNumber}
-                            aria-describedby={errors.whatsappNumber ? 'whatsappNumber-error' : undefined}
-                            className={`${inputClass(!!errors.whatsappNumber)} pl-12 max-sm:pl-[52px]`}
-                          />
+
+                        {/* 6. Plan (optional; preselected from the button clicked) */}
+                        <div>
+                          <label htmlFor="plan" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                            Plan <span className="text-slate-400 font-normal">(Optional)</span>
+                          </label>
+                          <select
+                            id="plan"
+                            value={formData.plan}
+                            onChange={(e) => update({ plan: e.target.value })}
+                            className={`${inputClass(false, true)} cursor-pointer`}
+                          >
+                            <option value="">{planLabel('')}</option>
+                            <option value={TRIAL_VALUE}>{planLabel(TRIAL_VALUE)}</option>
+                            {SERVICES.map((s) => (
+                              <optgroup key={s.id} label={s.title}>
+                                {s.plans.map((p) => (
+                                  <option key={p.name} value={planValue(s.id, p.name)}>
+                                    {s.title} – {p.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
                         </div>
-                        <FieldError id="whatsappNumber-error" message={errors.whatsappNumber} />
-                      </div>
 
-                      {/* 5. Goal (optional) */}
-                      <div>
-                        <label htmlFor="goal" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
-                          Your Goal <span className="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <select
-                          id="goal"
-                          value={formData.goal}
-                          onChange={(e) => update({ goal: e.target.value })}
-                          className={`${inputClass(false)} cursor-pointer`}
-                        >
-                          <option value="">Select your goal</option>
-                          {GOALS.map((g) => (
-                            <option key={g} value={g}>{g}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* 6. Plan (optional; preselected from the button clicked) */}
-                      <div>
-                        <label htmlFor="plan" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
-                          Plan <span className="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <select
-                          id="plan"
-                          value={formData.plan}
-                          onChange={(e) => update({ plan: e.target.value })}
-                          className={`${inputClass(false)} cursor-pointer`}
-                        >
-                          <option value="">{planLabel('')}</option>
-                          <option value={TRIAL_VALUE}>{planLabel(TRIAL_VALUE)}</option>
-                          {SERVICES.map((s) => (
-                            <optgroup key={s.id} label={s.title}>
-                              {s.plans.map((p) => (
-                                <option key={p.name} value={planValue(s.id, p.name)}>
-                                  {s.title} – {p.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Preferred contact method: Phone Call (default), WhatsApp, Email */}
-                      <div className="sm:col-span-2">
-                        <span className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">Preferred Contact Method</span>
-                        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Preferred contact method">
-                          {CONTACT_METHODS.map((method) => (
-                            <button
-                              key={method}
-                              type="button"
-                              role="radio"
-                              aria-checked={formData.contactMethod === method}
-                              onClick={() => update({ contactMethod: method })}
-                              className={`min-h-11 max-sm:min-h-[46px] py-2 px-2 sm:px-3 text-xs max-sm:text-[13px] font-semibold rounded-xl border transition-all cursor-pointer ${
-                                formData.contactMethod === method
-                                  ? 'bg-[#EEF5FF] text-[#1769FF] border-[#1769FF]'
-                                  : 'bg-white text-slate-700 border-[#E1E6EF] hover:bg-slate-50'
-                              }`}
-                            >
-                              {method}
-                            </button>
-                          ))}
+                        {/* Preferred contact method: Phone Call (default), WhatsApp, Email */}
+                        <div className="sm:col-span-2">
+                          <span className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">Preferred Contact Method</span>
+                          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Preferred contact method">
+                            {CONTACT_METHODS.map((method) => (
+                              <button
+                                key={method}
+                                type="button"
+                                role="radio"
+                                aria-checked={formData.contactMethod === method}
+                                onClick={() => update({ contactMethod: method })}
+                                className={`min-h-11 max-sm:min-h-[46px] py-2 px-2 sm:px-3 text-xs max-sm:text-[13px] font-semibold rounded-xl border transition-all cursor-pointer ${
+                                  formData.contactMethod === method
+                                    ? 'bg-[#EEF5FF] text-[#1769FF] border-[#1769FF]'
+                                    : 'bg-white text-slate-700 border-[#E1E6EF] hover:bg-slate-50'
+                                }`}
+                              >
+                                {method}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Honeypot: hidden from people, bots fill it in */}
-                    <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
-                      <label htmlFor="website">Website</label>
-                      <input
-                        id="website"
-                        type="text"
-                        tabIndex={-1}
-                        autoComplete="off"
-                        value={honeypot}
-                        onChange={(e) => setHoneypot(e.target.value)}
-                      />
-                    </div>
+                      {/* Honeypot: hidden from people, bots fill it in */}
+                      <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
+                        <label htmlFor="website">Website</label>
+                        <input
+                          id="website"
+                          type="text"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={honeypot}
+                          onChange={(e) => setHoneypot(e.target.value)}
+                        />
+                      </div>
 
-                    <div>
+                  </fieldset>
+
+                  <div>
                       {submitError && (
                         <div role="alert" className="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-[#C62828] flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -535,31 +539,104 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           </span>
                         </div>
                       )}
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full py-3 sm:py-3.5 px-4 sm:px-5 min-h-[44px] max-sm:min-h-[48px] text-xs max-sm:text-[15px] sm:text-sm font-bold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.99] rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75"
-                      >
-                        {isSubmitting ? (
-                          <span>Sending...</span>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4" />
-                            <span>Submit Request</span>
-                          </>
-                        )}
-                      </button>
-                      <p className="text-[length:max(10px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-center text-slate-400 mt-2">
-                        By submitting, you agree to be contacted by TeamSamir about this request. No spam.
-                      </p>
-                    </div>
-                  </form>
-                )}
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-3 sm:py-3.5 px-4 sm:px-5 min-h-[44px] max-sm:min-h-[48px] text-xs max-sm:text-[15px] sm:text-sm font-bold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.99] rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:cursor-wait disabled:bg-[#0B3D91]"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Submitting your details…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Submit Request</span>
+                        </>
+                      )}
+                    </button>
+                    {isSubmitting && (
+                      <div className="mt-2 h-1 w-full rounded-full bg-[#E1E6EF] overflow-hidden" aria-hidden="true">
+                        <div className="enquiry-sending-bar h-full w-1/3 rounded-full bg-[#1769FF]" />
+                      </div>
+                    )}
+                    <p className="text-[length:max(10px,calc(10rem/16))] sm:text-[length:max(11px,calc(11rem/16))] text-center text-slate-400 mt-2">
+                      By submitting, you agree to be contacted by TeamSamir about this request. No spam.
+                    </p>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Success popup (centre of the screen): green celebration, the submitted details and a
+          5-second bar below them; then it closes and a fresh form is ready. A mouse hover pauses. */}
+      {isSubmitted && (
+        <>
+          <GreenConfetti />
+          <div
+            className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0B1220]/60 backdrop-blur-sm enquiry-fade"
+            onClick={(e) => e.target === e.currentTarget && handleReset()}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="enquiry-success-title"
+              className="w-full max-w-lg max-h-[90svh] overflow-y-auto rounded-3xl bg-white shadow-2xl border-t-4 border-[#16834A] p-5 sm:p-7 space-y-5 text-center enquiry-pop"
+              // Only a mouse hovering over the popup pauses the 5 s bar (a tap on a phone does not)
+              onPointerEnter={(e) => e.pointerType === 'mouse' && setResetPaused(true)}
+              onPointerLeave={(e) => e.pointerType === 'mouse' && setResetPaused(false)}
+            >
+              <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#16834A] flex items-center justify-center mx-auto ring-8 ring-emerald-50">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                <h3 id="enquiry-success-title" className="text-2xl sm:text-3xl font-display font-bold text-[#16834A]">
+                  Thank You, {formData.fullName.trim()}!
+                </h3>
+                <p className="text-sm text-[#646B78] leading-relaxed">
+                  We have your request. Our team will contact you by <strong className="text-[#171A21]">{formData.contactMethod}</strong> soon.
+                </p>
+              </div>
+
+              <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 sm:p-5 text-left text-xs space-y-2.5">
+                <div className="text-xs font-bold text-[#16834A] uppercase tracking-wider pb-1 border-b border-emerald-200">
+                  Your Request
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+                  <div><strong>Name:</strong> {formData.fullName.trim()}</div>
+                  <div><strong>Mobile:</strong> +91 {formData.mobileNumber}</div>
+                  <div><strong>WhatsApp:</strong> +91 {whatsapp}</div>
+                  <div className="break-all"><strong>Email:</strong> {formData.email.trim() || '—'}</div>
+                  <div><strong>Goal:</strong> {formData.goal || '—'}</div>
+                  <div><strong>Contact by:</strong> {formData.contactMethod}</div>
+                  <div className="sm:col-span-2"><strong>Plan:</strong> {planLabel(formData.plan)}</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 text-left text-[length:max(11px,calc(11rem/16))] text-slate-500">
+                <ShieldCheck className="w-4 h-4 text-[#16834A] shrink-0" />
+                <p>Your details are shared only with Samir's team and used only to contact you about this request.</p>
+              </div>
+
+              {/* 5-second bar, below the details */}
+              <AutoResetBar duration={SUCCESS_RESET_MS} paused={resetPaused} onDone={handleReset} />
+
+              <button
+                ref={closeButtonRef}
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#16834A] text-white font-semibold text-xs hover:bg-[#0F6B3A] transition-all cursor-pointer shadow-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Submit Another Request</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Section 2: Trainer & Location Info (horizontal) */}
       <section className="py-8 sm:py-12 lg:py-14 bg-slate-50 border-b border-[#E1E6EF]">
@@ -607,7 +684,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
               <InfoItem icon={<MessageSquare className="w-4 h-4" />} label="WhatsApp Business" green>
                 <a
                   href={`https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-                    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
+                    BUSINESS_INFO.contact.whatsappMessage
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

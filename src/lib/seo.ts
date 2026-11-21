@@ -35,7 +35,7 @@ export const PAGE_META: Record<PageId, PageMeta> = {
   services: {
     title: 'Personal Training & Nutrition Services | TeamSamir',
     description:
-      'Explore TeamSamir coaching: 1-on-1 personal training, health management, nutrition guidance and offline training in Pune. Compare plans and book a free demo.',
+      'Explore TeamSamir coaching: 1-on-1 personal training, health management, nutrition guidance and offline training in Pune. Compare plans and book a free consultation.',
     image: '/media/shared/og/og-services.jpg',
     imageAlt: 'Personal training session with a TeamSamir coach',
     index: true,

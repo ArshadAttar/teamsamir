@@ -97,7 +97,7 @@ const openInstagram = (e: React.MouseEvent<HTMLAnchorElement>) => {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {
   const whatsappHref = `https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-    'Hi Samir, I want to book a free demo session at TeamSamir in Pune.'
+    BUSINESS_INFO.contact.whatsappMessage
   )}`;
 
   return (
