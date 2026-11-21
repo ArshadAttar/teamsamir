@@ -75,7 +75,7 @@ export interface EnquiryFormData {
   goal: string;
   /** '' = not sure, 'trial', or '<serviceId>::<plan name>' */
   plan: string;
-  contactMethod: 'WhatsApp' | 'Email';
+  contactMethod: 'Phone Call' | 'WhatsApp' | 'Email';
 }
 
 export type EnquiryFormErrors = Partial<Record<'fullName' | 'email' | 'mobileNumber' | 'whatsappNumber', string>>;

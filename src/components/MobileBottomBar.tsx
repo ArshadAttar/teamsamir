@@ -174,8 +174,16 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({ currentPage, o
                     >
                       <Icon className="w-5 h-5" />
                     </span>
-                    {/* Absolutely placed so a long label never widens the item (keeps the circle centred) */}
-                    <span className="absolute top-[56px] left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#0B1220]/55 backdrop-blur-sm text-[length:max(11px,calc(11rem/16))] font-semibold text-white">
+                    {/* Absolutely placed so a long label never widens the item (keeps the circle centred).
+                        The current page shows only its highlighted circle: its name is hidden on screen
+                        (still read out by screen readers). */}
+                    <span
+                      className={
+                        isActive
+                          ? 'sr-only'
+                          : 'absolute top-[56px] left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#0B1220]/55 backdrop-blur-sm text-[length:max(11px,calc(11rem/16))] font-semibold text-white'
+                      }
+                    >
                       {label}
                     </span>
                   </motion.a>

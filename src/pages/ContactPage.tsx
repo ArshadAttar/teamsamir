@@ -592,17 +592,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           />
                         </div>
 
-                        {/* Contact preference: label and two round icons (WhatsApp, the default, and Email)
-                            on one line; the chosen way is named under the label */}
+                        {/* Contact preference: the label and three round icons (Phone Call, WhatsApp – the
+                            default – and Email) on one line. The chosen icon is filled; no name is shown
+                            (each icon has a tooltip and an accessible name). */}
                         <div className="sm:col-span-2 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <span id="contact-way-label" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
-                              Contact Preference
-                            </span>
-                            <span className="block text-[length:max(12px,calc(12rem/16))] font-semibold text-[#1769FF] mt-0.5">
-                              {formData.contactMethod}
-                            </span>
-                          </div>
+                          <span id="contact-way-label" className="min-w-0 text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
+                            Contact Preference
+                          </span>
                           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0" role="radiogroup" aria-labelledby="contact-way-label">
                             {CONTACT_METHODS.map((method) => {
                               const isChosen = formData.contactMethod === method;
@@ -626,6 +622,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                                         : 'bg-white border-[#E1E6EF] text-slate-500 hover:border-[#1769FF] hover:text-[#1769FF]'
                                   }`}
                                 >
+                                  {method === 'Phone Call' && <Phone className="w-4 h-4" />}
                                   {isWhatsApp && <WhatsAppIcon className="w-4 h-4" />}
                                   {method === 'Email' && <Mail className="w-4 h-4" />}
                                 </button>
