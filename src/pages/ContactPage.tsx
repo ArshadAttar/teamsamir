@@ -322,15 +322,45 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     };
   }, [isSubmitted]);
 
-  // A press on the popup ends wherever the finger / button is released
+  // Popup timer pause.
+  // Laptops: paused while the mouse is over the card. The popup can open right under a mouse
+  // that isn't moving (no "enter" event then), so the last mouse position is remembered and
+  // checked when the popup opens.
+  // Phones: paused while a finger is on the card. Touch events are used (not pointer events):
+  // a finger that moves a little makes the browser cancel the pointer and start scrolling,
+  // which used to restart the timer at once; touchend only comes when the finger lifts.
+  const popupCardRef = useRef<HTMLDivElement>(null);
+  const lastMouse = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  useEffect(() => {
+    if (!isSubmitted) return;
+    const frame = requestAnimationFrame(() => {
+      const m = lastMouse.current;
+      if (!m || !window.matchMedia('(hover: hover)').matches) return;
+      const under = document.elementFromPoint(m.x, m.y);
+      if (under && popupCardRef.current?.contains(under)) setHoverPaused(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isSubmitted]);
+
+  // A press (finger or mouse button) ends wherever it is released
   useEffect(() => {
     if (!pressPaused) return;
     const release = () => setPressPaused(false);
-    window.addEventListener('pointerup', release);
-    window.addEventListener('pointercancel', release);
+    window.addEventListener('touchend', release);
+    window.addEventListener('touchcancel', release);
+    window.addEventListener('mouseup', release);
     return () => {
-      window.removeEventListener('pointerup', release);
-      window.removeEventListener('pointercancel', release);
+      window.removeEventListener('touchend', release);
+      window.removeEventListener('touchcancel', release);
+      window.removeEventListener('mouseup', release);
     };
   }, [pressPaused]);
 
@@ -442,7 +472,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                         {/* 3. Mobile number (required, 10 digits) */}
                         <div>
-                          <label htmlFor="mobileNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21] mb-1.5">
+                          <label htmlFor="mobileNumber" className="block text-xs max-sm:text-[13px] leading-4 font-semibold text-[#171A21] mb-1.5">
                             Mobile Number <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
@@ -466,11 +496,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
                         {/* 4. WhatsApp number (required, 10 digits; can copy mobile) */}
                         <div>
+                          {/* Same line height as the Mobile Number label, so both fields line up side by side.
+                              The checkbox is the size of its text (1em). */}
                           <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <label htmlFor="whatsappNumber" className="block text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
+                            <label htmlFor="whatsappNumber" className="block text-xs max-sm:text-[13px] leading-4 font-semibold text-[#171A21]">
                               WhatsApp Number <span className="text-red-500">*</span>
                             </label>
-                            <label className="inline-flex items-center gap-1.5 min-h-8 text-[length:max(12px,calc(12rem/16))] text-[#646B78] cursor-pointer">
+                            <label className="inline-flex items-center gap-1.5 text-xs max-sm:text-[13px] leading-4 text-[#646B78] cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={sameAsMobile}
@@ -478,7 +510,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                                   setSameAsMobile(e.target.checked);
                                   update({}, e.target.checked);
                                 }}
-                                className="w-4 h-4 rounded text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
+                                className="w-[1em] h-[1em] m-0 rounded-sm text-[#1769FF] border-slate-300 focus:ring-[#1769FF] cursor-pointer"
                               />
                               Same as mobile
                             </label>
@@ -640,19 +672,24 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
         <>
           <GreenConfetti />
           <div
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0B1220]/60 backdrop-blur-sm enquiry-fade"
+            className="fixed inset-0 z-[90] flex items-center justify-center p-2.5 sm:p-4 bg-[#0B1220]/60 backdrop-blur-sm enquiry-fade"
             onClick={(e) => e.target === e.currentTarget && handleReset()}
           >
             <div
+              ref={popupCardRef}
               role="dialog"
               aria-modal="true"
               aria-labelledby="enquiry-success-title"
-              className="w-full max-w-lg max-h-[90svh] overflow-y-auto rounded-3xl bg-white shadow-2xl border-t-4 border-[#16834A] p-5 sm:p-7 space-y-5 text-center enquiry-pop"
-              // The 5 s bar stops while a mouse is over the card (laptops) and while the card is
-              // pressed / held (any device); it carries on when the mouse leaves or the press ends
+              className="w-full max-w-[38.4rem] max-h-[90svh] overflow-y-auto rounded-3xl bg-white shadow-2xl border-t-4 border-[#16834A] p-5 sm:p-7 space-y-5 text-center enquiry-pop"
+              // The 5 s bar stops while a mouse is over the card (laptops) and while a finger or
+              // mouse button is held on it (any device); it carries on when the mouse leaves or
+              // the press ends. Only real mouse pointers count as hover (phones send fake mouse
+              // events after a tap, which must not leave the popup paused).
               onPointerEnter={(e) => e.pointerType === 'mouse' && setHoverPaused(true)}
+              onPointerMove={(e) => e.pointerType === 'mouse' && !hoverPaused && setHoverPaused(true)}
               onPointerLeave={(e) => e.pointerType === 'mouse' && setHoverPaused(false)}
-              onPointerDown={() => setPressPaused(true)}
+              onTouchStart={() => setPressPaused(true)}
+              onPointerDown={(e) => e.pointerType === 'mouse' && setPressPaused(true)}
             >
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#16834A] flex items-center justify-center mx-auto ring-8 ring-emerald-50">
                 <CheckCircle2 className="w-10 h-10" />
@@ -683,7 +720,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
               <div className="flex items-start gap-2 text-left text-[length:max(11px,calc(11rem/16))] text-slate-500">
                 <ShieldCheck className="w-4 h-4 text-[#16834A] shrink-0" />
-                <p>Your details are shared only with Samir's team and used only to contact you about this request.</p>
+                <p>Your details are shared only with TeamSamir's Staff & used only to contact you about this request.</p>
               </div>
 
               {/* 5-second bar, below the details */}
