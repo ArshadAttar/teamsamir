@@ -1,5 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { submitEnquiry } from '../lib/submitEnquiry';
+import { EnquiryError, submitEnquiry } from '../lib/submitEnquiry';
+import {
+  CONTACT_METHODS,
+  EMAIL_MAX,
+  EMAIL_RE,
+  GOALS,
+  IN_MOBILE_RE,
+  NAME_MAX,
+  NAME_RE,
+  PHONE_LEN,
+} from '../lib/enquiryRules';
+import { isTurnstileConfigured, Turnstile, TurnstileHandle } from '../components/Turnstile';
 import { BookingIntent, EnquiryFormData, EnquiryFormErrors } from '../types';
 import { BUSINESS_INFO, SERVICES } from '../data/mockData';
 import { EnquiryPlanPanel, planLabel, planValue, TRIAL_VALUE } from '../components/EnquiryPlanPanel';
@@ -30,17 +41,15 @@ interface ContactPageProps {
   highlightPlaceholders: boolean;
 }
 
-const CONTACT_METHODS = ['Phone Call', 'WhatsApp', 'Email'] as const;
-
-const GOALS = [
-  'Fat Loss / Weight Management',
-  'Muscle Building',
-  'Strength Training',
-  'General Fitness & Health',
-  'Flexibility & Posture',
-  'Senior Fitness / Mobility',
-  'Other',
-];
+/** Id for one form fill; the server ignores a repeat with the same id (double submit / retry) */
+const newSubmissionId = (): string => {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+};
 
 /** Options for the custom "Your Goal" drop-down */
 const GOAL_GROUPS: SelectGroup[] = [
@@ -65,14 +74,7 @@ const PLAN_GROUPS: SelectGroup[] = [
   })),
 ];
 
-// Validation rules
-const NAME_MAX = 50;
-const EMAIL_MAX = 100;
-const PHONE_LEN = 10;
-const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
-const IN_MOBILE_RE = /^[6-9]\d{9}$/; // Indian mobile: 10 digits starting 6-9
-
+// Validation rules come from src/lib/enquiryRules.ts (the server checks the same rules again)
 const validate = (data: EnquiryFormData, sameAsMobile: boolean): EnquiryFormErrors => {
   const errors: EnquiryFormErrors = {};
   const name = data.fullName.trim();
@@ -223,9 +225,15 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
 
   const digitsOnly = (value: string) => value.replace(/\D/g, '').slice(0, PHONE_LEN);
 
+  const turnstileRef = useRef<TurnstileHandle>(null);
+  // One id per form fill: a retry or double submit of the same fill is ignored by the server
+  const submissionId = useRef(newSubmissionId());
+  // Set instantly (state updates wait for a re-render), so a fast double click can't send twice
+  const submittingRef = useRef(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
     setTriedSubmit(true);
     setSubmitError('');
     const found = validate(formData, sameAsMobile);
@@ -234,9 +242,16 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
       document.getElementById(Object.keys(found)[0])?.focus();
       return;
     }
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
+      const turnstileToken = (await turnstileRef.current?.getToken()) ?? '';
+      if (isTurnstileConfigured && !turnstileToken) {
+        throw new EnquiryError('Please complete the security check above the Submit button.', 'CAPTCHA');
+      }
       await submitEnquiry({
+        turnstileToken,
+        submissionId: submissionId.current,
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
         mobileNumber: formData.mobileNumber,
@@ -253,6 +268,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not send your request. Please try again.');
     } finally {
+      // Turnstile tokens work once: get a fresh one for the next attempt
+      turnstileRef.current?.reset();
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -267,6 +285,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     setHoverPaused(false);
     setPressPaused(false);
     shownAt.current = Date.now();
+    submissionId.current = newSubmissionId();
   };
 
   const whatsapp = sameAsMobile ? formData.mobileNumber : formData.whatsappNumber;
@@ -572,6 +591,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                   </fieldset>
 
                   <div>
+                      {/* Bot check: invisible unless Cloudflare asks for a click */}
+                      <Turnstile ref={turnstileRef} className="mb-3 empty:hidden" />
                       {submitError && (
                         <div role="alert" className="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-[#C62828] flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

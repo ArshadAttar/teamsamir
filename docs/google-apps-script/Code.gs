@@ -4,7 +4,16 @@
  * Paste this into Extensions → Apps Script of the "TeamSamir Enquiries" Google Sheet.
  * Setup steps: see docs/google-apps-script/SETUP.md
  *
- * What it does on every form submit:
+ * Security (see docs/SECURITY.md):
+ *   - Only the website's server function (api/enquiry.ts on Vercel) may post here. It sends
+ *     a shared secret that must match the FORM_SHARED_SECRET Script Property
+ *     (Project Settings → Script Properties). Anything else is refused.
+ *   - At most RATE_LIMIT_MAX enquiries per visitor IP per rolling 24 hours (the IP arrives
+ *     only as a hash). Counts are kept in Script Properties, shared by every request.
+ *   - Repeats of the same form fill (same submission id) and of the same mobile number
+ *     within a short window are ignored. A site-wide hourly cap protects the email quota.
+ *
+ * What it does on every accepted form submit:
  *   1. Saves the enquiry as a new row in the sheet (always – no daily limit).
  *   2. Emails it from the sheet owner's Gmail to the same Gmail (Inbox + Sent copy),
  *      while the daily Gmail quota allows.
@@ -26,11 +35,28 @@ const CONFIG = {
   DIGEST_MAX_ROWS: 300,
   // Ignore a repeat submit from the same mobile number within this many seconds.
   DUPLICATE_WINDOW_SEC: 120,
-  // Submits faster than this after the page loaded are treated as bots.
-  MIN_FILL_MS: 2500,
+  // Max enquiries from one visitor IP in a rolling 24 hours.
+  RATE_LIMIT_MAX: 20,
+  RATE_LIMIT_WINDOW_MS: 24 * 60 * 60 * 1000,
+  // Max enquiries from everyone together per hour (stops floods using up the email quota).
+  GLOBAL_HOURLY_MAX: 150,
+  // A repeat of the same form fill (submission id) within this many seconds is ignored.
+  SUBMISSION_ID_WINDOW_SEC: 600,
   // Optional extra recipients, e.g. ['partner@example.com']. Each one uses quota.
   CC: [],
 };
+
+const GOALS = [
+  'Fat Loss / Weight Management',
+  'Muscle Building',
+  'Strength Training',
+  'General Fitness & Health',
+  'Flexibility & Posture',
+  'Senior Fitness / Mobility',
+  'Other',
+];
+const CONTACT_METHODS = ['Phone Call', 'WhatsApp', 'Email'];
+const RL_PREFIX = 'rl_';
 
 const HEADERS = [
   'Timestamp',
@@ -56,27 +82,49 @@ const STATUS_PENDING = 'Pending (digest)';
 
 function doPost(e) {
   try {
-    const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    const raw = (e && e.postData && e.postData.contents) || '';
+    if (raw.length > 8192) return json_({ ok: false, code: 'INVALID', error: 'Request too large.' });
+    const body = JSON.parse(raw || '{}');
 
-    // Honeypot / too-fast submit: pretend success so bots learn nothing.
-    if (body.website || Number(body.elapsedMs || 0) < CONFIG.MIN_FILL_MS) {
-      return json_({ ok: true });
-    }
+    // Only the website's server function knows the secret. Direct posts to this URL are refused.
+    if (!secretMatches_(body.secret)) return json_({ ok: false, code: 'FORBIDDEN' });
 
     const data = clean_(body);
     const error = validate_(data);
-    if (error) return json_({ ok: false, error: error });
+    if (error) return json_({ ok: false, code: 'INVALID', error: error });
 
-    // Repeated click / double submit from the same number.
+    const ipKey = /^[0-9a-f]{32}$/.test(String(body.ipHash || '')) ? RL_PREFIX + body.ipHash : RL_PREFIX + 'unknown';
     const cache = CacheService.getScriptCache();
-    const dupKey = 'm_' + data.mobile;
-    if (cache.get(dupKey)) return json_({ ok: true, duplicate: true });
-    cache.put(dupKey, '1', CONFIG.DUPLICATE_WINDOW_SEC);
+
+    // Same form fill sent twice (double click, retry after a slow network): ignore quietly.
+    const sidKey = 'sid_' + data.submissionId;
+    if (data.submissionId && cache.get(sidKey)) return json_({ ok: true, duplicate: true });
 
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     let row;
     try {
+      // Per-IP limit: RATE_LIMIT_MAX in a rolling 24 hours
+      const now = Date.now();
+      const props = PropertiesService.getScriptProperties();
+      const recent = parseStamps_(props.getProperty(ipKey)).filter((t) => now - t < CONFIG.RATE_LIMIT_WINDOW_MS);
+      if (recent.length >= CONFIG.RATE_LIMIT_MAX) return json_({ ok: false, code: 'RATE_LIMIT' });
+
+      // Site-wide hourly cap
+      const hourKey = 'g_' + Math.floor(now / 3600000);
+      const hourCount = Number(cache.get(hourKey) || 0);
+      if (hourCount >= CONFIG.GLOBAL_HOURLY_MAX) return json_({ ok: false, code: 'BUSY' });
+
+      // Repeat from the same mobile number within a short window: ignore quietly
+      const dupKey = 'm_' + data.mobile;
+      if (cache.get(dupKey)) return json_({ ok: true, duplicate: true });
+
+      recent.push(now);
+      props.setProperty(ipKey, JSON.stringify(recent));
+      cache.put(hourKey, String(hourCount + 1), 3700);
+      cache.put(dupKey, '1', CONFIG.DUPLICATE_WINDOW_SEC);
+      if (data.submissionId) cache.put(sidKey, '1', CONFIG.SUBMISSION_ID_WINDOW_SEC);
+
       const sheet = getSheet_();
       sheet.appendRow([
         new Date(),
@@ -115,8 +163,44 @@ function doPost(e) {
   }
 }
 
+/** Nothing to see here: no service name or details for anyone probing the URL */
 function doGet() {
-  return json_({ ok: true, service: CONFIG.BRAND + ' enquiry endpoint' });
+  return json_({ ok: false });
+}
+
+/** Compares the posted secret with the FORM_SHARED_SECRET Script Property in constant time */
+function secretMatches_(given) {
+  const expected = PropertiesService.getScriptProperties().getProperty('FORM_SHARED_SECRET') || '';
+  const got = String(given || '');
+  if (expected.length < 32 || got.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ got.charCodeAt(i);
+  return diff === 0;
+}
+
+function parseStamps_(value) {
+  try {
+    const list = JSON.parse(value || '[]');
+    return Array.isArray(list) ? list.filter((t) => typeof t === 'number') : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Deletes rate-limit records older than 24 hours (Script Properties have a size limit).
+ * Runs from the hourly trigger.
+ */
+function cleanupRateLimits() {
+  const props = PropertiesService.getScriptProperties();
+  const all = props.getProperties();
+  const now = Date.now();
+  Object.keys(all).forEach((key) => {
+    if (key.indexOf(RL_PREFIX) !== 0) return;
+    const recent = parseStamps_(all[key]).filter((t) => now - t < CONFIG.RATE_LIMIT_WINDOW_MS);
+    if (recent.length) props.setProperty(key, JSON.stringify(recent));
+    else props.deleteProperty(key);
+  });
 }
 
 // ───────────────────────── Hourly digest ─────────────────────────
@@ -229,6 +313,16 @@ function setup() {
     .filter((t) => t.getHandlerFunction() === 'sendPendingDigest')
     .forEach((t) => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('sendPendingDigest').timeBased().everyHours(1).create();
+
+  // Hourly clean-up of old rate-limit records (recreated so running setup twice is safe).
+  ScriptApp.getProjectTriggers()
+    .filter((t) => t.getHandlerFunction() === 'cleanupRateLimits')
+    .forEach((t) => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('cleanupRateLimits').timeBased().everyHours(1).create();
+
+  if (!PropertiesService.getScriptProperties().getProperty('FORM_SHARED_SECRET')) {
+    console.warn('FORM_SHARED_SECRET is not set: every submit will be refused until it is (Project Settings → Script Properties).');
+  }
 
   console.log('Setup done. Emails go to: ' + ownerEmail_() + '. Quota left today: ' + MailApp.getRemainingDailyQuota());
 }
@@ -345,20 +439,26 @@ function clean_(b) {
     email: s(b.email, 100),
     mobile: digits(b.mobileNumber),
     whatsapp: digits(b.whatsappNumber || b.mobileNumber),
-    goal: s(b.goal, 80),
-    plan: s(b.plan, 150),
-    contactMethod: ['Phone Call', 'WhatsApp', 'Email'].indexOf(b.contactMethod) >= 0 ? b.contactMethod : 'Phone Call',
+    goal: GOALS.indexOf(b.goal) >= 0 ? b.goal : '',
+    plan: s(b.plan, 120),
+    contactMethod: CONTACT_METHODS.indexOf(b.contactMethod) >= 0 ? b.contactMethod : 'Phone Call',
     form: s(b.formTitle, 120),
     page: s(b.pageUrl, 300),
+    submissionId: /^[0-9a-f-]{36}$/i.test(String(b.submissionId || '')) ? String(b.submissionId) : '',
   };
 }
+
+// Same rules as src/lib/enquiryRules.ts (checked again here as a second layer)
+const SAFE_TEXT_RE = /^[\p{L}\p{N} .,'’()/&+–—:-]*$/u;
 
 function validate_(d) {
   if (d.name.length < 2) return 'Name is required.';
   if (!/^[A-Za-z][A-Za-z .'-]*$/.test(d.name)) return 'Use letters and spaces only in the name.';
   if (!/^[6-9]\d{9}$/.test(d.mobile)) return 'Enter a valid 10-digit mobile number.';
   if (!/^[6-9]\d{9}$/.test(d.whatsapp)) return 'Enter a valid 10-digit WhatsApp number.';
-  if (d.email && !/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(d.email)) return 'Enter a valid email.';
+  if (d.email && !/^[^\s@<>"'`]+@[^\s@<>"'`]+\.[A-Za-z]{2,}$/.test(d.email)) return 'Enter a valid email.';
+  if (!SAFE_TEXT_RE.test(d.plan) || !SAFE_TEXT_RE.test(d.form)) return 'Invalid request.';
+  if (d.page && !/^https?:\/\/[^\s<>"']+$/.test(d.page)) return 'Invalid request.';
   return '';
 }
 
