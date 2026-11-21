@@ -197,7 +197,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
     whatsappNumber: '',
     goal: '',
     plan: initialPlan(bookingIntent),
-    contactMethod: 'WhatsApp',
+    contactMethod: 'Phone Call',
   });
 
   /** Copy of the enquiry that was sent, shown in the thank-you popup (the form itself is cleared) */
@@ -592,8 +592,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                           />
                         </div>
 
-                        {/* Contact preference: the label and three round icons (Phone Call, WhatsApp – the
-                            default – and Email) on one line. The chosen icon is filled; no name is shown
+                        {/* Contact preference: the label and three round icons (Phone Call – the default –,
+                            WhatsApp and Email) on one line. The chosen icon is filled; no name is shown
                             (each icon has a tooltip and an accessible name). */}
                         <div className="sm:col-span-2 flex items-center justify-between gap-3">
                           <span id="contact-way-label" className="min-w-0 text-xs max-sm:text-[13px] font-semibold text-[#171A21]">
