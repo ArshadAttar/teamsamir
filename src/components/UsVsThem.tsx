@@ -46,8 +46,8 @@ interface UsVsThemProps {
   className?: string;
 }
 
-/** Phones: rows open at first (the rest show only their heading until tapped) */
-const INITIALLY_OPEN = [0, 1, 2];
+/** Phones: the first two rows start open; the other four show only their heading until tapped */
+const INITIALLY_OPEN = [0, 1];
 
 export const UsVsThem: React.FC<UsVsThemProps> = ({ onBookDemo, className = '' }) => {
   const [openRows, setOpenRows] = useState<Set<number>>(() => new Set(INITIALLY_OPEN));

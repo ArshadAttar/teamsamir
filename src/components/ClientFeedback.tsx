@@ -42,20 +42,6 @@ const ReviewText: React.FC<{ text: string; className?: string }> = ({ text, clas
   </div>
 );
 
-/** Phone review preview length (characters) */
-const PREVIEW_CHARS = 300;
-
-/** Cuts a long review at a word boundary and adds "…" (keeps **bold** markers paired) */
-const shortenReview = (text: string): string => {
-  if (text.length <= PREVIEW_CHARS + 40) return text;
-  let cut = text.slice(0, PREVIEW_CHARS);
-  const space = cut.lastIndexOf(' ');
-  if (space > PREVIEW_CHARS * 0.6) cut = cut.slice(0, space);
-  cut = cut.replace(/[\s.,;:!-]+$/, '');
-  if ((cut.match(/\*\*/g) ?? []).length % 2 === 1) cut += '**';
-  return `${cut}…`;
-};
-
 const Stars: React.FC<{ count: number }> = ({ count }) => (
   <div className="flex gap-0.5" aria-label={`${count} out of 5 stars`}>
     {Array.from({ length: count }).map((_, i) => (
@@ -109,8 +95,10 @@ const ResultBadge: React.FC<{ text: string; solid?: boolean }> = ({ text, solid 
  * expands on its own.
  * - `strip` (tablets and laptops): fixed-height card in the scrolling strip; the preview
  *   fills the card.
- * - `single` (phones, one card per screen): the card is as tall as its content; the
- *   preview is about 8 lines.
+ * - `single` (phones, one card per screen): every card has the same fixed height (a short
+ *   review leaves empty space). The preview shows as many whole lines as fit, ending in
+ *   "…" (line clamp, no fade: a CSS mask inside the swipe carousel made Android Chrome
+ *   draw garbage). Expanded, the card grows to the full message.
  */
 const ReviewCard: React.FC<{
   review: ReviewItem;
@@ -128,10 +116,31 @@ const ReviewCard: React.FC<{
   expandedRef.current = expanded;
 
   const single = layout === 'single';
-  // Phones: the collapsed preview is a shortened copy of the text (ending in "…"), not a
-  // faded-out box. A CSS mask inside the swipe carousel made Android Chrome draw garbage.
-  const shortText = single ? shortenReview(review.comment) : review.comment;
-  const singleIsLong = single && shortText !== review.comment;
+
+  // Phones: how many lines fit in the text area of the fixed-height card
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState(8);
+
+  useEffect(() => {
+    const area = areaRef.current;
+    const text = textBoxRef.current;
+    if (!single || expanded || !area || !text) return;
+    let frame = 0;
+    const measure = () => {
+      const lineHeight = parseFloat(getComputedStyle(text).lineHeight) || 22;
+      setLines(Math.max(1, Math.floor(area.clientHeight / lineHeight)));
+      // After the new clamp is applied, check whether the full text is longer
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setOverflows(text.scrollHeight > text.clientHeight + 1));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(area);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [single, expanded]);
 
   useEffect(() => {
     const el = textBoxRef.current;
@@ -146,7 +155,7 @@ const ReviewCard: React.FC<{
     return () => observer.disconnect();
   }, [single]);
 
-  const showToggle = single ? singleIsLong : overflows;
+  const showToggle = overflows;
 
   const onExpandedChangeRef = useRef(onExpandedChange);
   onExpandedChangeRef.current = onExpandedChange;
@@ -173,9 +182,10 @@ const ReviewCard: React.FC<{
       ? ''
       : 'min-h-[440px] sm:min-h-[462px]'
     : single
-      ? ''
+      ? 'h-[470px]'
       : 'h-[440px] sm:h-[462px]';
   const previewSize = expanded || single ? '' : 'h-full';
+  const singleCollapsed = single && !expanded;
 
   return (
     <article ref={cardRef} className={`${single ? PHONE_CARD : GLASS} ${cardSize} p-5 sm:p-6 flex flex-col gap-4`}>
@@ -184,17 +194,28 @@ const ReviewCard: React.FC<{
         <Quote className="w-6 h-6 text-[#00A3FF]/50" />
       </div>
 
-      {/* Message: collapsed, the end of a long message is faded out */}
-      <div className={`relative min-h-0 ${!single && !expanded ? 'flex-1' : ''}`}>
-        <div
-          ref={textBoxRef}
-          id={textId}
-          className={`text-sm leading-relaxed ${previewSize} ${
-            expanded || single ? '' : `overflow-hidden ${overflows ? '[mask-image:linear-gradient(to_bottom,black_65%,transparent)]' : ''}`
-          }`}
-        >
-          <ReviewText text={expanded ? review.comment : shortText} className="text-slate-100" />
-        </div>
+      {/* Message: collapsed, the end of a long message is faded out (strip) or cut at a whole line with "…" (phones) */}
+      <div ref={areaRef} className={`relative min-h-0 ${!expanded ? 'flex-1' : ''}`}>
+        {singleCollapsed ? (
+          <div
+            ref={textBoxRef}
+            id={textId}
+            className="text-sm leading-relaxed text-slate-100 whitespace-pre-line overflow-hidden"
+            style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: lines }}
+          >
+            {renderBold(review.comment)}
+          </div>
+        ) : (
+          <div
+            ref={textBoxRef}
+            id={textId}
+            className={`text-sm leading-relaxed ${previewSize} ${
+              expanded ? '' : `overflow-hidden ${overflows ? '[mask-image:linear-gradient(to_bottom,black_65%,transparent)]' : ''}`
+            }`}
+          >
+            <ReviewText text={review.comment} className="text-slate-100" />
+          </div>
+        )}
       </div>
 
       {showToggle && (
@@ -329,6 +350,7 @@ export const FeedbackVideoStrip: React.FC<{ videos: VideoFeedbackItem[]; label: 
       <SnapCarousel
         label={label}
         className="pt-2 pb-6"
+        showPosition={false}
         items={videos}
         getKey={(v) => v.id}
         loop

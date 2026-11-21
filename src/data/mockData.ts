@@ -38,7 +38,8 @@ export const BUSINESS_INFO = {
   },
   social: {
     instagramHandle: 'teamsamir_india',
-    instagramUrl: 'https://www.instagram.com/teamsamir_india/',
+    // The profile link as shared by the client (opens the web profile)
+    instagramUrl: 'https://www.instagram.com/teamsamir_india?dmpr=MWFieTd0bGIxNHEzdw==',
   },
   disclaimerClaims: 'Client and celebrity training statistics are supplied by the client and are presented as editable figures pending formal verification before public launch.',
 };

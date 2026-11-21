@@ -35,16 +35,31 @@ const shortHours = (hours: string) =>
     .trim();
 
 /**
- * On phones and tablets, open the profile in the same tab: Android and iOS hand an
- * instagram.com link to the Instagram app when it is installed (a new tab often stays in
- * the browser). Without the app, instagram.com opens, where people can log in or get the
- * app. Computers keep the normal new-tab link.
+ * Opens the Instagram profile in the Instagram app when possible.
+ * - Android: an intent link that asks Android to open the profile in the Instagram app;
+ *   if the app isn't installed, the browser opens the web profile instead. (A plain
+ *   instagram.com link often stays in Chrome even when the app is installed.)
+ * - iPhone / iPad: the instagram.com link in the same tab, which iOS hands to the
+ *   Instagram app when it is installed (otherwise the web profile opens).
+ * - Computers: the web profile in a new tab (the normal link). A website can't open the
+ *   Windows / Mac Instagram app.
  */
 const openInstagram = (e: React.MouseEvent<HTMLAnchorElement>) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-  if (!window.matchMedia('(hover: none) and (pointer: coarse)').matches) return;
-  e.preventDefault();
-  window.location.href = BUSINESS_INFO.social.instagramUrl;
+  const { instagramHandle, instagramUrl } = BUSINESS_INFO.social;
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) {
+    e.preventDefault();
+    window.location.href =
+      `intent://www.instagram.com/_u/${instagramHandle}/#Intent;scheme=https;package=com.instagram.android;` +
+      `S.browser_fallback_url=${encodeURIComponent(instagramUrl)};end`;
+    return;
+  }
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    e.preventDefault();
+    window.location.href = instagramUrl;
+  }
 };
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onBookDemo }) => {

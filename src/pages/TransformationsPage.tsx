@@ -275,10 +275,12 @@ const SectionHeader: React.FC<{
   subtitle: string;
   trackRef?: React.RefObject<HTMLDivElement | null>;
   edges?: { start: boolean; end: boolean };
-}> = ({ title, subtitle, trackRef, edges }) => (
+  /** Centre the title and subtitle on phones */
+  centerOnPhone?: boolean;
+}> = ({ title, subtitle, trackRef, edges, centerOnPhone = false }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
     <motion.div
-      className="max-w-2xl space-y-3"
+      className={`max-w-2xl space-y-3 ${centerOnPhone ? 'max-sm:text-center max-sm:mx-auto' : ''}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
@@ -384,7 +386,7 @@ const CardButton: React.FC<{ item: ClientTransformation; onOpen: () => void; sin
       className={single ? 'w-full aspect-[3/4] max-h-[58svh]' : 'aspect-[3/4]'}
     />
 
-    <h3 className="px-1.5 pt-3 pb-1 sm:px-2 font-display font-bold text-[length:max(15px,calc(15rem/16))] sm:text-base text-white leading-snug line-clamp-2 min-h-[2.75em]">
+    <h3 className="text-center px-1.5 pt-3 pb-1 sm:px-2 font-display font-bold text-[length:max(15px,calc(15rem/16))] sm:text-base text-white leading-snug line-clamp-2 min-h-[2.75em]">
       {item.title}
     </h3>
   </button>
@@ -543,6 +545,7 @@ export const TransformationsPage: React.FC<TransformationsPageProps> = () => {
           <div id="real-transformations">
             <SectionHeader
               title="Real Transformations"
+              centerOnPhone
               subtitle="Real journeys, real dedication and visible progress. Every transformation tells a story of consistency and hard work."
               trackRef={photoTrack}
               edges={photoEdges}
@@ -553,6 +556,7 @@ export const TransformationsPage: React.FC<TransformationsPageProps> = () => {
             // Phones: one photo at a time, centered; swipe or use the buttons, moves on by itself every 5 s
             <SnapCarousel
               label="Client before and after photos"
+              showPosition={false}
               items={CLIENT_TRANSFORMATIONS}
               getKey={(item) => item.id}
               autoAdvanceMs={5000}

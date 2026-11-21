@@ -29,6 +29,8 @@ interface SnapCarouselProps<T> {
   loop?: boolean;
   /** Called when the visible item changes */
   onActiveChange?: (index: number) => void;
+  /** Show dots / "3 / 13" counter between the arrows (false = arrows only) */
+  showPosition?: boolean;
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export function SnapCarousel<T>({
   adaptiveHeight = false,
   loop = false,
   onActiveChange,
+  showPosition = true,
   className = '',
 }: SnapCarouselProps<T>) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -245,7 +248,7 @@ export function SnapCarousel<T>({
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {count <= MAX_DOTS ? (
+          {!showPosition ? null : count <= MAX_DOTS ? (
             <div className="flex items-center">
               {items.map((item, i) => (
                 <button

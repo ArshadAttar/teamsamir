@@ -83,11 +83,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onMouseEnter={() => setIsHeadlinePaused(true)}
                 onMouseLeave={() => setIsHeadlinePaused(false)}
               >
-                <HeroReveal sentence={HEADLINE_OPTIONS[headlineIndex]} />
+                {/* Always as tall as the longest headline, so nothing below moves when it rotates */}
+                <HeroReveal sentence={HEADLINE_OPTIONS[headlineIndex]} reserveFor={HEADLINE_OPTIONS} />
               </div>
 
-              {/* Supporting Copy */}
-              <p className="text-xs sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+              {/* Supporting Copy (desktop here; phones and tablets show it after the logo) */}
+              <p className="hidden lg:block text-base text-slate-300 leading-relaxed max-w-2xl">
                 Your fitness. Your goals. <span className="text-[#00A3FF] font-semibold">Our expertise.</span>
               </p>
 
@@ -127,6 +128,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                   />
                 </div>
               </div>
+
+              {/* Supporting Copy on phones and tablets: after the stat cards and logo */}
+              <p className="lg:hidden text-sm sm:text-base text-slate-300 leading-relaxed">
+                Your fitness. Your goals. <span className="text-[#00A3FF] font-semibold">Our expertise.</span>
+              </p>
 
               {/* Credibility Line (Client-supplied claims with verification notice).
                   Below lg the stats are in the cards above, so only the sentence shows here. */}
