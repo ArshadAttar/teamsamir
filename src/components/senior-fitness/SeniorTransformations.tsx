@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
 import { img } from '../../data/seniorFitnessMedia';
+import { PROTECTED_VIDEO_PROPS } from '../../lib/videoProtection';
 
 // Real senior client sessions (recorded live online coaching). Clips: senior-NN.mp4 (720x480, ~18 s);
 // thumbnails: senior-video-NN.webp (frame at 5 s). Originals are in ../media-originals/Website/senior-fitness-video/.
@@ -129,6 +130,7 @@ const ViewerVideo: React.FC<{ src: string; poster: string }> = ({ src, poster })
   return (
     <div className="relative max-w-full">
       <video
+        {...PROTECTED_VIDEO_PROPS}
         ref={ref}
         src={src}
         poster={poster}
@@ -433,6 +435,7 @@ export const SeniorTransformations: React.FC = () => {
             <AnimatePresence mode="wait">
               {/* Featured clip autoplays muted on loop (falls back to the poster image) */}
               <motion.video
+                {...(PROTECTED_VIDEO_PROPS as object)}
                 key={activeVideo}
                 ref={featuredRef}
                 onPlay={(e) => {

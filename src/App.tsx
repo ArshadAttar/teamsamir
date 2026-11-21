@@ -11,6 +11,7 @@ import { VideoModal } from './components/VideoModal';
 import { PrototypeToolbar } from './components/PrototypeToolbar';
 import { PlaceholderDialog } from './components/PlaceholderDialog';
 import { WhatsAppFloat } from './components/WhatsAppFloat';
+import { ContentProtection } from './components/ContentProtection';
 
 import { Suspense } from 'react';
 import { PAGES } from './pages/registry';
@@ -181,6 +182,9 @@ export default function App({ initialPage }: AppProps) {
 
       {/* Floating WhatsApp button (bottom-right, every page) */}
       <WhatsAppFloat />
+
+      {/* Site-wide copy / save / right-click protection (renders nothing) */}
+      <ContentProtection />
 
       {/* 7. Case Study Lightbox Modal */}
       <LightboxModal

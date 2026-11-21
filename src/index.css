@@ -187,3 +187,42 @@ h1, h2, h3, .font-display {
 @media (prefers-reduced-motion: reduce) {
   .enquiry-fade, .enquiry-pop { animation: none; }
 }
+
+/* ── Content protection (see src/components/ContentProtection.tsx, docs/CONTENT-PROTECTION.md) ──
+   No text selection or iOS long-press "Save Image / Copy" menu outside form fields; images and
+   videos can't be dragged out. Form fields stay fully usable. */
+html {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+select,
+[contenteditable=""],
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+img,
+video,
+picture,
+svg {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Printing / "Save as PDF" shows a notice instead of the page */
+@media print {
+  body * {
+    display: none !important;
+  }
+  body::before {
+    content: "Printing this website is not permitted. Visit teamsamir.vercel.app";
+    display: block;
+    padding: 48px;
+    font: 600 18px/1.5 system-ui, sans-serif;
+    color: #171a21;
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { PROTECTED_VIDEO_PROPS } from '../lib/videoProtection';
 
 type LazyVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, 'autoPlay' | 'preload'> & {
   src: string;
@@ -48,5 +49,5 @@ export const LazyVideo: React.FC<LazyVideoProps> = ({ src, autoPlay = false, ref
     else if (!visible) el.pause();
   }, [near, visible, autoPlay]);
 
-  return <video ref={setRefs} src={near ? src : undefined} preload={near ? 'metadata' : 'none'} {...rest} />;
+  return <video ref={setRefs} src={near ? src : undefined} preload={near ? 'metadata' : 'none'} {...PROTECTED_VIDEO_PROPS} {...rest} />;
 };
