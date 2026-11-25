@@ -23,10 +23,11 @@ const BRAND_DESCRIPTION =
 const KEY_TOPICS = ['Fitness Coaching', 'Personal Training', 'Nutrition Coaching', 'Senior Fitness Training'];
 
 /**
- * Official social profiles (JSON-LD sameAs). Clean profile URLs only, no tracking
- * parameters. Add a profile here only when it is the brand's own account.
+ * Official social profiles (JSON-LD sameAs). Reuses the exact profile URLs the site
+ * already links to (BUSINESS_INFO.social), so there is one source for each link.
+ * Add a profile here only when it is the brand's own account.
  */
-export const SOCIAL_PROFILES = [`https://www.instagram.com/${BUSINESS_INFO.social.instagramHandle}/`];
+export const SOCIAL_PROFILES = [BUSINESS_INFO.social.instagramUrl];
 
 export interface PageMeta {
   title: string;
@@ -53,7 +54,7 @@ export const PAGE_META: Record<PageId, PageMeta> = {
   services: {
     title: 'Personal Training & Nutrition Coaching Services | Team Samir',
     description:
-      'Explore Team Samir coaching: 1-on-1 personal training, nutrition coaching, health management and offline training in Pune. Compare plans and book a free consultation.',
+      'Team Samir coaching in Pune: 1-on-1 personal training, nutrition coaching, health management and offline training. Compare plans and book a free consultation.',
     image: '/media/shared/og/og-services.jpg',
     imageAlt: 'Personal training session with a Team Samir coach',
     index: true,
@@ -61,7 +62,7 @@ export const PAGE_META: Record<PageId, PageMeta> = {
   'senior-fitness': {
     title: 'Senior Fitness Training for Older Adults | Team Samir',
     description:
-      'One-on-one fitness training for senior citizens in Pune with Team Samir: safe, low-impact exercise for strength, balance and mobility, planned around your health needs.',
+      'One-on-one fitness training for senior citizens in Pune: safe, low-impact exercise for strength, balance and mobility, planned around your health needs.',
     image: '/media/shared/og/og-senior-fitness.jpg',
     imageAlt: 'Senior fitness training session focused on strength and balance',
     index: true,
@@ -69,7 +70,7 @@ export const PAGE_META: Record<PageId, PageMeta> = {
   transformations: {
     title: 'Client Transformations & Training Stories | Team Samir',
     description:
-      'See training journeys, before-and-after progress and workout videos from Team Samir fitness coaching in Pune. Individual results vary with effort and consistency.',
+      'Training journeys, before-and-after progress and workout videos from Team Samir fitness coaching in Pune. Individual results vary with effort and consistency.',
     image: '/media/shared/og/og-transformations.jpg',
     imageAlt: 'Strength training highlights from Team Samir coaching',
     index: true,
@@ -77,7 +78,7 @@ export const PAGE_META: Record<PageId, PageMeta> = {
   about: {
     title: 'About Samir | Personal Trainer & Fitness Coach | Team Samir',
     description:
-      'Meet Samir, founder and head coach of Team Samir in Kothrud, Pune. Learn about his coaching approach: technique first, progressive training and Indian nutrition.',
+      'Meet Samir, founder and head coach of Team Samir in Kothrud, Pune. His coaching approach: technique first, progressive training and Indian nutrition.',
     image: '/media/shared/og/og-about.jpg',
     imageAlt: 'Samir, founder and head coach of Team Samir',
     index: true,
@@ -116,7 +117,8 @@ const organization = () => ({
   alternateName: SITE_ALT_NAMES,
   description: BRAND_DESCRIPTION,
   url: `${SITE_URL}/`,
-  logo: abs('/media/shared/logo/logo-black.jpeg'),
+  // Square, tightly cropped, transparent brand mark (Google shows it on a white background)
+  logo: { '@type': 'ImageObject', '@id': `${SITE_URL}/#logo`, url: abs('/icon-512.png'), width: 512, height: 512, caption: SITE_NAME },
   image: abs(DEFAULT_IMAGE),
   sameAs: SOCIAL_PROFILES,
   email: BUSINESS_INFO.contact.email,
