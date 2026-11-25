@@ -236,7 +236,7 @@ svg {
     display: none !important;
   }
   body::before {
-    content: "Printing this website is not permitted. Visit teamsamir.vercel.app";
+    content: "Printing this website is not permitted. Visit teamsamir.com";
     display: block;
     padding: 48px;
     font: 600 18px/1.5 system-ui, sans-serif;

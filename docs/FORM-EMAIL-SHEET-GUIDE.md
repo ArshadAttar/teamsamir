@@ -16,7 +16,7 @@ The last section is a **ready-to-copy prompt** for Claude, so it can do the code
 ## 1. How it works today
 
 ```
-Visitor fills the form (teamsamir.vercel.app/contact/)
+Visitor fills the form (teamsamir.com/contact/)
    → Cloudflare Turnstile bot check (invisible)
    → Vercel Function  api/enquiry.ts   (checks the data, adds the secret)
    → Google Apps Script web app       (docs/google-apps-script/Code.gs, attached to the sheet)
@@ -109,7 +109,7 @@ The new inbox automatically receives the emails, because the code emails whichev
 
 ## D. Test after any change
 
-1. Open <https://teamsamir.vercel.app/contact/> in your normal browser.
+1. Open <https://teamsamir.com/contact/> in your normal browser.
 2. Fill in dummy data:
    - Full Name: `Test Enquiry`
    - Mobile: `9999999999`

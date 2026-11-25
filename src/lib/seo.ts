@@ -7,7 +7,7 @@ import { PAGE_PATHS } from './routes';
  * Change this ONE value when the custom domain goes live, then redeploy.
  * No trailing slash.
  */
-export const SITE_URL = 'https://teamsamir.vercel.app';
+export const SITE_URL = 'https://teamsamir.com';
 
 export const SITE_NAME = 'TeamSamir';
 

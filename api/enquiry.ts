@@ -32,12 +32,13 @@ const TURNSTILE_TIMEOUT_MS = 8000;
 const APPS_SCRIPT_TIMEOUT_MS = 20000;
 const TURNSTILE_ACTION = 'enquiry';
 
-const PRODUCTION_ORIGIN = 'https://teamsamir.vercel.app';
+/** Custom domain (primary), its www alias, and the original Vercel URL */
+const PRODUCTION_ORIGINS = ['https://teamsamir.com', 'https://www.teamsamir.com', 'https://teamsamir.vercel.app'];
 const GENERIC_ERROR = 'Could not send your request. Please try again or call us.';
 
 /** Sites allowed to post the form */
 function allowedOrigins(env = process.env): string[] {
-  const list = new Set<string>([PRODUCTION_ORIGIN]);
+  const list = new Set<string>(PRODUCTION_ORIGINS);
   for (const o of (env.ALLOWED_ORIGINS ?? '').split(',')) {
     const t = o.trim().replace(/\/+$/, '');
     if (/^https?:\/\/[a-z0-9.-]+(:\d+)?$/i.test(t)) list.add(t);

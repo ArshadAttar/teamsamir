@@ -57,7 +57,7 @@ Environment Variables and in the script's Script Properties. Security details: `
 ## Step 6: Cloudflare Turnstile (free bot check)
 
 1. Sign in at <https://dash.cloudflare.com> (free account) → **Turnstile → Add widget**.
-2. Widget name `TeamSamir enquiry`, hostname `teamsamir.vercel.app` (add your custom domain too if you have one),
+2. Widget name `TeamSamir enquiry`, hostnames `teamsamir.com`, `www.teamsamir.com` and `teamsamir.vercel.app`,
    widget mode **Managed**. Create.
 3. Copy the **Site Key** and the **Secret Key**.
 

@@ -2,7 +2,7 @@
 
 Marketing website for TeamSamir / TS Fitness, a personal-training business in Kothrud, Pune.
 
-- **Live site:** https://teamsamir.vercel.app
+- **Live site:** https://teamsamir.com (also reachable at https://teamsamir.vercel.app)
 - **Repository:** https://github.com/ArshadAttar/teamsamir
 - **Local folder:** `C:\samir-website-data\ts-website\team-samir`
 
@@ -26,7 +26,7 @@ Other commands:
 
 ## Deploy
 
-The site is hosted on Vercel (project `teamsamir`), which is connected to this GitHub repo. Every push to `main` deploys to https://teamsamir.vercel.app automatically.
+The site is hosted on Vercel (project `teamsamir`), which is connected to this GitHub repo. Every push to `main` deploys to https://teamsamir.com automatically.
 
 - `VITE_FORM_ENDPOINT` is set in the Vercel project's Environment Variables (Production and Preview). After changing it, redeploy.
 - The domain the site uses for canonical links, share previews and the sitemap is `SITE_URL` in `src/lib/seo.ts`. Change it there if the domain changes.
