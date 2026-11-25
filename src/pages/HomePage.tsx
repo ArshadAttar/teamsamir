@@ -111,7 +111,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <img
                     decoding="async"
                     src="/media/shared/logo/logo-without-bg.webp"
-                    alt="TeamSamir logo"
+                    alt="Team Samir logo"
                     className="absolute inset-0 w-full h-full object-contain"
                     referrerPolicy="no-referrer"
                   />
@@ -179,7 +179,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {/* Transparent logo mark */}
                     <img decoding="async"
                       src="/media/shared/logo/logo-without-bg.webp"
-                      alt="TeamSamir logo - TeamSamir Pune"
+                      alt="Team Samir fitness coaching logo, Kothrud, Pune"
                       className="w-3/5 h-3/4 object-contain object-center shrink-0 transition-transform duration-500 ease-out group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
@@ -294,7 +294,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <div className="aspect-4/3 relative overflow-hidden bg-slate-100">
                     <img loading="lazy" decoding="async"
                       src={service.image}
-                      alt={service.title}
+                      alt={`${service.title} with Team Samir`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />

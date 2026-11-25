@@ -55,7 +55,7 @@ const ReviewAuthor: React.FC<{ review: ReviewItem; large?: boolean }> = ({ revie
   <div className="flex items-center gap-3 min-w-0">
     <img decoding="async"
       src={review.avatar}
-      alt=""
+      alt={`${review.name}, Team Samir client`}
       loading="lazy"
       className={`${large ? 'w-12 h-12' : 'w-11 h-11'} rounded-full object-cover border-2 border-white/30 shrink-0`}
     />

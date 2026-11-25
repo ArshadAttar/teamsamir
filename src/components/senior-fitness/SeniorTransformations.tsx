@@ -517,7 +517,7 @@ export const SeniorTransformations: React.FC = () => {
                 }`}
               >
                 <span className="relative block aspect-[16/10] rounded-[10px] overflow-hidden">
-                  <img decoding="async" src={v.src} alt="" loading="lazy" style={{ objectPosition: v.position }} className="w-full h-full object-cover" />
+                  <img decoding="async" src={v.src} alt={`${v.title}: Team Samir senior fitness video`} loading="lazy" style={{ objectPosition: v.position }} className="w-full h-full object-cover" />
                   <Watermark />
                   <span className="absolute right-1.5 bottom-1.5 bg-black/70 rounded-md px-1.5 text-[length:max(11px,calc(11rem/16))] tabular-nums">{v.duration}</span>
                 </span>

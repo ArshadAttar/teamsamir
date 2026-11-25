@@ -237,7 +237,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onBookDemo, initialO
                       <div className="aspect-4/3 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 border border-[#E1E6EF] relative shadow-sm">
                         <img loading="lazy" decoding="async"
                           src={service.image}
-                          alt={service.title}
+                          alt={`${service.title} with Team Samir`}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
