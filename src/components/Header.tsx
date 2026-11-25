@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PageId } from '../types';
 import { TeamSamirLogo } from './TeamSamirLogo';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { pageLink } from '../lib/routes';
 
 interface HeaderProps {
@@ -30,6 +30,63 @@ export const Header: React.FC<HeaderProps> = ({
   // make the header slide in and out on its own.
   // While it is hidden, a floating "Enquiry Form" button takes its place.
   const [isHidden, setIsHidden] = useState(false);
+
+  // Phones and tablets: the page tabs row is closed until the visitor opens it, and then it stays
+  // open (also across page changes) until they close it with the round arrow button.
+  const [tabsOpen, setTabsOpen] = useState(false);
+
+  // "Pull down to reveal", like WhatsApp's Archived row: when the page is already at the very
+  // top and the visitor keeps pulling down (finger) or scrolling up (wheel / trackpad), the tabs
+  // row opens. Only opens, never closes; phones and tablets only.
+  useEffect(() => {
+    const PULL = 45; // px of extra pull needed at the top
+    const isSmall = () => window.matchMedia('(max-width: 1023.98px)').matches;
+    let startY: number | null = null;
+    let wheelPull = 0;
+    let wheelTimer = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      startY = window.scrollY <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (startY === null || window.scrollY > 0) return;
+      if (e.touches[0].clientY - startY > PULL && isSmall()) {
+        setTabsOpen(true);
+        startY = null;
+      }
+    };
+    const onTouchEnd = () => {
+      startY = null;
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (window.scrollY > 0 || e.deltaY >= 0 || !isSmall()) {
+        wheelPull = 0;
+        return;
+      }
+      wheelPull -= e.deltaY;
+      window.clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(() => (wheelPull = 0), 400);
+      if (wheelPull > PULL) {
+        setTabsOpen(true);
+        wheelPull = 0;
+      }
+    };
+
+    const opts = { passive: true } as const;
+    window.addEventListener('touchstart', onTouchStart, opts);
+    window.addEventListener('touchmove', onTouchMove, opts);
+    window.addEventListener('touchend', onTouchEnd, opts);
+    window.addEventListener('touchcancel', onTouchEnd, opts);
+    window.addEventListener('wheel', onWheel, opts);
+    return () => {
+      window.clearTimeout(wheelTimer);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      window.removeEventListener('wheel', onWheel);
+    };
+  }, []);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -147,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Primary CTA on every screen (the page menu on phones and tablets is in MobileBottomBar) */}
+        {/* Zone 3: Primary CTA on every screen */}
         <button
           onClick={onBookDemo}
           className="inline-flex items-center justify-center gap-1.5 min-h-[32px] sm:min-h-[38px] px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-[#1769FF] hover:bg-[#0B3D91] active:scale-[0.98] rounded-lg sm:rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
@@ -158,29 +215,57 @@ export const Header: React.FC<HeaderProps> = ({
 
       </div>
 
-      {/* Mobile quick navigation tabs: the same padding on all four sides of the strip */}
-      <nav
-        aria-label="Quick page links"
-        className="lg:hidden bg-slate-50/95 border-t border-[#E1E6EF] p-1.5 sm:px-4 overflow-x-auto no-scrollbar flex items-center gap-1 sm:gap-1.5 scroll-smooth"
+      {/* Mobile quick navigation tabs (phones / tablets). Closed by default; they slide open and
+          shut (the row's height animates from 0) with the round arrow button below the header, and
+          also open when the visitor pulls down at the very top of the page. */}
+      <div
+        className={`lg:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+          tabsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
       >
-        {navItems.map((item) => {
-          const isActive = currentPage === item.id;
-          return (
-            <a
-              key={item.id}
-              {...pageLink(item.id, onNavigate)}
-              aria-current={isActive ? 'page' : undefined}
-              className={`cursor-pointer whitespace-nowrap text-[length:max(11px,calc(11rem/16))] sm:text-xs font-medium leading-none py-2.5 px-3 rounded-md transition-all shrink-0 ${
-                isActive
-                  ? 'bg-[#1769FF] text-white font-semibold shadow-xs'
-                  : 'text-[#646B78] hover:text-[#171A21] hover:bg-slate-200/50'
-              }`}
-            >
-              {item.label}
-            </a>
-          );
-        })}
-      </nav>
+        <div className="overflow-hidden min-h-0">
+          <nav
+            id="quick-page-links"
+            aria-label="Quick page links"
+            inert={!tabsOpen}
+            className="bg-slate-50/95 border-t border-[#E1E6EF] p-1.5 sm:px-4 overflow-x-auto no-scrollbar flex items-center gap-1 sm:gap-1.5 scroll-smooth"
+          >
+            {navItems.map((item) => {
+              const isActive = currentPage === item.id;
+              return (
+                <a
+                  key={item.id}
+                  {...pageLink(item.id, onNavigate)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`cursor-pointer whitespace-nowrap text-[length:max(11px,calc(11rem/16))] sm:text-xs font-medium leading-none py-2.5 px-3 rounded-md transition-all shrink-0 ${
+                    isActive
+                      ? 'bg-[#1769FF] text-white font-semibold shadow-xs'
+                      : 'text-[#646B78] hover:text-[#171A21] hover:bg-slate-200/50'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* Round arrow button hanging just below the header's bottom edge (right corner).
+          It moves down with the tabs row as it opens; hidden while the header is scrolled away. */}
+      <button
+        type="button"
+        onClick={() => setTabsOpen((open) => !open)}
+        aria-expanded={tabsOpen}
+        aria-controls="quick-page-links"
+        aria-label={tabsOpen ? 'Hide page links' : 'Show page links'}
+        tabIndex={isHidden ? -1 : 0}
+        className={`lg:hidden absolute top-full right-3 sm:right-6 mt-2 w-8 h-8 rounded-full border shadow-md flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-90 ${
+          tabsOpen ? 'bg-[#1769FF] border-[#1769FF] text-white' : 'bg-white border-[#E1E6EF] text-[#171A21] hover:border-[#1769FF] hover:text-[#1769FF]'
+        } ${isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      >
+        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${tabsOpen ? 'rotate-180' : ''}`} />
+      </button>
     </header>
 
     {/* Floating "Enquiry Form" shown only while the header is hidden */}

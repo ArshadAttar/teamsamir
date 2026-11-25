@@ -425,8 +425,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
           Phones and tablets: the form first; the "Plans" button swaps it for the plan list and back. */}
       <section ref={sectionRef} className="scroll-mt-28 py-8 sm:py-12 lg:py-14 border-b border-[#E1E6EF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start">
-            <div className={`lg:col-span-5 ${mobileView === 'plans' ? '' : 'max-lg:hidden'}`}>
+          {/* Desktop: plans on the left span both rows; the form and the contact cards stack on the right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-x-10 lg:gap-y-6 items-start">
+            <div className={`lg:col-span-5 lg:row-span-2 lg:self-stretch ${mobileView === 'plans' ? '' : 'max-lg:hidden'}`}>
               <EnquiryPlanPanel
                 intent={bookingIntent}
                 selectedPlan={formData.plan}
@@ -687,6 +688,94 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
                 </form>
               </div>
             </div>
+
+            {/* Trainer & Location: details card (items in 2 columns) above the map card */}
+            <div className="lg:col-span-7 flex flex-col gap-5 sm:gap-6">
+              <div
+                className={`p-5 sm:p-6 rounded-2xl border flex flex-col gap-4 transition-all ${
+                  highlightPlaceholders ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-300' : 'bg-white border-[#E1E6EF] shadow-xs'
+                }`}
+              >
+                <div>
+                  <div className="text-[12px] font-bold text-[#1769FF] uppercase tracking-wider">Connect Directly</div>
+                  <h2 className="text-[14px] font-display font-bold text-[#171A21] tracking-tight mt-0.5">
+                    Trainer & Location Info
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+
+                <InfoItem icon={<Sparkles className="w-[13px] h-[13px]" />} label="Samir R " inline note={`${BUSINESS_INFO.experienceYears}+ Years Experience`}>
+                  <div className="text-[12px] font-semibold text-[#171A21]">Former Coach at Fitness Talk</div>
+                </InfoItem>
+
+                <InfoItem icon={<MapPin className="w-[13px] h-[13px]" />} label="Address" inline note="Kothrud, Pune, Maharashtra 411038">
+                  <div className="text-[12px] font-semibold text-[#171A21]">Near Ashish Garden</div>
+                </InfoItem>
+
+                <InfoItem icon={<Phone className="w-[13px] h-[13px]" />} label="Phone Number" inline>
+                  <a href={`tel:${BUSINESS_INFO.contact.phoneRaw}`} className="inline-block text-[12px] font-medium text-slate-900 hover:text-[#1769FF] transition-colors">
+                    {BUSINESS_INFO.contact.phone}
+                  </a>
+                </InfoItem>
+
+                <InfoItem icon={<MessageSquare className="w-[13px] h-[13px]" />} label="WhatsApp" green inline>
+                  <a
+                    href={`https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
+                      BUSINESS_INFO.contact.whatsappMessage
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-[12px] font-medium text-[#16834A] hover:underline"
+                  >
+                    {BUSINESS_INFO.contact.whatsapp}
+                  </a>
+                </InfoItem>
+
+                <InfoItem icon={<Mail className="w-[13px] h-[13px]" />} label="Email Address" inline>
+                  <a href={`mailto:${BUSINESS_INFO.contact.email}`} className="inline-block text-[12px] font-medium text-slate-900 break-all hover:text-[#1769FF] transition-colors">
+                    {BUSINESS_INFO.contact.email}
+                  </a>
+                </InfoItem>
+
+                <InfoItem icon={<Clock className="w-[13px] h-[13px]" />} label="Hours" inline>
+                  <div className="text-[12px] font-medium text-slate-800">{BUSINESS_INFO.contact.workingHours}</div>
+                </InfoItem>
+                </div>
+              </div>
+
+              {/* Live Google Map, below the details; the Get Directions button sits on the map */}
+              <div className="rounded-2xl border border-[#E1E6EF] bg-white p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-[14px] font-bold text-[#171A21]">Near Ashish Garden Banquet Hall</h3>
+                    <p className="text-[12px] text-[#646B78] mt-0.5">Kothrud, Pune, Maharashtra</p>
+                  </div>
+                  <Navigation className="w-5 h-5 text-[#1769FF] shrink-0" />
+                </div>
+                <div className="relative w-full h-[200px] sm:h-[220px] rounded-xl overflow-hidden border border-slate-200">
+                  <iframe
+                    title="Ashish Garden Banquet Hall Location"
+                    src="https://maps.google.com/maps?q=18.5026368,73.8025847&z=17&output=embed"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, position: 'absolute', inset: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <a
+                    href="https://www.google.com/maps/place/Ashish+Garden+Banquet+Hall/@18.5026368,73.8025847,17z"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute top-2.5 right-2.5 z-10 inline-flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[#1769FF] hover:bg-[#0B3D91] text-white text-[12px] font-semibold shadow-md transition-colors"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>Get Directions</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -764,129 +853,38 @@ export const ContactPage: React.FC<ContactPageProps> = ({ bookingIntent, highlig
         </>
       )}
 
-      {/* Section 2: Trainer & Location Info (horizontal) */}
-      <section className="py-8 sm:py-12 lg:py-14 bg-slate-50 border-b border-[#E1E6EF]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 sm:space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-            <div>
-              <div className="text-xs font-bold text-[#1769FF] uppercase tracking-wider mb-1">Connect Directly</div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-[#171A21] tracking-tight">
-                Trainer & Location Info
-              </h2>
-            </div>
-            <a
-              href={`tel:${BUSINESS_INFO.contact.phoneRaw}`}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-[#EEF5FF] text-[#171A21] border border-[#E1E6EF] hover:border-[#1769FF] text-xs font-semibold transition-all cursor-pointer shadow-xs shrink-0"
-            >
-              <Phone className="w-4 h-4 text-[#1769FF]" />
-              <span>Call {BUSINESS_INFO.contact.phone}</span>
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
-            {/* Contact details: 2-column grid of items */}
-            <div
-              className={`lg:col-span-6 p-5 sm:p-6 rounded-2xl border grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 transition-all ${
-                highlightPlaceholders ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-300' : 'bg-white border-[#E1E6EF] shadow-xs'
-              }`}
-            >
-              <InfoItem icon={<Sparkles className="w-4 h-4" />} label="Head Trainer & Founder" accent>
-                <div className="text-sm font-bold text-[#171A21]">TeamSamir</div>
-                <div className="text-xs text-[#646B78]">{BUSINESS_INFO.experienceYears}+ Years Experience · Former Coach at Fitness Talk</div>
-              </InfoItem>
-
-              <InfoItem icon={<MapPin className="w-4 h-4" />} label="Studio Location">
-                <div className="text-sm font-semibold text-[#171A21]">{BUSINESS_INFO.location.fullAddress}</div>
-                <p className="text-[length:max(11px,calc(11rem/16))] text-slate-500 mt-0.5">Kothrud, Pune, Maharashtra 411038</p>
-              </InfoItem>
-
-              <InfoItem icon={<Phone className="w-4 h-4" />} label="Phone Number">
-                <a href={`tel:${BUSINESS_INFO.contact.phoneRaw}`} className="inline-block py-1 lg:py-0 text-sm font-medium text-slate-900 hover:text-[#1769FF] transition-colors">
-                  {BUSINESS_INFO.contact.phone}
-                </a>
-              </InfoItem>
-
-              <InfoItem icon={<MessageSquare className="w-4 h-4" />} label="WhatsApp Business" green>
-                <a
-                  href={`https://wa.me/${BUSINESS_INFO.contact.whatsappNumber}?text=${encodeURIComponent(
-                    BUSINESS_INFO.contact.whatsappMessage
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block py-1 lg:py-0 text-sm font-medium text-[#16834A] hover:underline"
-                >
-                  {BUSINESS_INFO.contact.whatsapp} (Direct Chat)
-                </a>
-              </InfoItem>
-
-              <InfoItem icon={<Mail className="w-4 h-4" />} label="Email Address">
-                <a href={`mailto:${BUSINESS_INFO.contact.email}`} className="inline-block py-1 lg:py-0 text-sm font-medium text-slate-900 break-all hover:text-[#1769FF] transition-colors">
-                  {BUSINESS_INFO.contact.email}
-                </a>
-              </InfoItem>
-
-              <InfoItem icon={<Clock className="w-4 h-4" />} label="Operating Hours">
-                <div className="text-xs font-medium text-slate-800">{BUSINESS_INFO.contact.workingHours}</div>
-              </InfoItem>
-            </div>
-
-            {/* Live Google Map */}
-            <div className="lg:col-span-6 rounded-2xl border border-[#E1E6EF] bg-white p-5 sm:p-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-bold text-[#171A21]">Near Ashish Garden Banquet Hall</h3>
-                  <p className="text-xs text-[#646B78] mt-1">Kothrud, Pune, Maharashtra</p>
-                </div>
-                <Navigation className="w-5 h-5 text-[#1769FF] shrink-0" />
-              </div>
-              <div className="relative w-full flex-1 min-h-[220px] rounded-xl overflow-hidden border border-slate-200">
-                <iframe
-                  title="Ashish Garden Banquet Hall Location"
-                  src="https://maps.google.com/maps?q=18.5026368,73.8025847&z=17&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, position: 'absolute', inset: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-              <a
-                href="https://www.google.com/maps/place/Ashish+Garden+Banquet+Hall/@18.5026368,73.8025847,17z"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1769FF] hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
-              >
-                <Navigation className="w-4 h-4" />
-                <span>Get Directions on Google Maps</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
 
 /** One labelled row in the Trainer & Location card */
-const InfoItem: React.FC<{ icon: React.ReactNode; label: string; accent?: boolean; green?: boolean; children: React.ReactNode }> = ({
-  icon,
-  label,
-  accent,
-  green,
-  children,
-}) => (
-  <div className="flex items-start gap-3">
+const InfoItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  green?: boolean;
+  /** Label and value on one line ("PHONE NUMBER: +91 ...") instead of the value below the label */
+  inline?: boolean;
+  /** Optional lighter second line under an inline label + value */
+  note?: string;
+  children: React.ReactNode;
+}> = ({ icon, label, green, inline, note, children }) => (
+  <div className={`flex gap-3 ${inline && !note ? 'items-center' : 'items-start'}`}>
     <div
-      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+      className={`w-[29px] h-[29px] rounded-md flex items-center justify-center shrink-0 ${inline && !note ? '' : 'mt-0.5'} ${
         green ? 'bg-emerald-50 text-[#16834A]' : 'bg-[#EEF5FF] text-[#1769FF]'
       }`}
     >
       {icon}
     </div>
     <div className="min-w-0">
-      <span className={`text-xs font-bold uppercase tracking-wider ${accent ? 'text-[#1769FF]' : 'text-slate-500'}`}>{label}</span>
-      <div className="mt-0.5">{children}</div>
+      <div className={inline ? 'flex flex-wrap items-baseline gap-x-2 gap-y-0.5' : ''}>
+        <span className="text-[12px] font-bold uppercase tracking-wider text-[#1769FF]">
+          {label}
+          {inline && ':'}
+        </span>
+        <div className={inline ? 'whitespace-nowrap' : 'mt-0.5'}>{children}</div>
+      </div>
+      {note && <p className="text-[12px] text-slate-500 mt-0.5">{note}</p>}
     </div>
   </div>
 );

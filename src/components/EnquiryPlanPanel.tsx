@@ -134,7 +134,7 @@ export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, sele
         : 'Scroll to compare every plan. Tap one to select it in the form.';
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl border border-[#E1E6EF] bg-slate-50 p-4 sm:p-6 space-y-4">
+    <div className="lg:h-full flex flex-col rounded-2xl sm:rounded-3xl border border-[#E1E6EF] bg-slate-50 p-4 sm:p-6 space-y-4">
       <div>
         <div className="flex items-center justify-between gap-2">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1769FF] uppercase tracking-wider">
@@ -156,7 +156,9 @@ export const EnquiryPlanPanel: React.FC<EnquiryPlanPanelProps> = ({ intent, sele
       {intent.kind !== 'trial' && !service && (
         // All plans: scrolls inside its own box so the form stays in view. At either end of
         // the list, scrolling carries on to the page (no overscroll-contain).
-        <div className="max-h-[60vh] lg:max-h-[42rem] overflow-y-auto overscroll-auto pr-1 pt-2 -mr-1 space-y-6">
+        // Desktop: the list takes no height of its own (h-0) and grows to fill the panel, so the
+        // panel ends level with the form + contact cards beside it.
+        <div className="max-h-[60vh] lg:max-h-none lg:h-0 lg:grow lg:min-h-[28rem] overflow-y-auto overscroll-auto pr-1 pt-2 -mr-1 space-y-6">
           <TrialCard selected={selectedPlan === TRIAL_VALUE} onSelect={() => onSelectPlan(TRIAL_VALUE)} />
           {SERVICES.map((s) => (
             <ServiceGroup key={s.id} service={s} selectedPlan={selectedPlan} onSelectPlan={onSelectPlan} />
